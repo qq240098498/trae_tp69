@@ -64,6 +64,10 @@
             <label for="recipientName">收件人姓名（选填）</label>
             <input type="text" id="recipientName" name="recipientName" placeholder="输入收件人姓名" maxlength="50">
           </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="isBigItem" name="isBigItem">
+            <label for="isBigItem">📦 标记为大件（自动分配到大件区）</label>
+          </div>
           <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 16px; padding: 12px;">
             📥 确认入库
           </button>
@@ -129,6 +133,7 @@
       const trackingNumber = document.getElementById('trackingNumber').value.trim();
       const recipientPhone = document.getElementById('recipientPhone').value.trim();
       const recipientName = document.getElementById('recipientName').value.trim();
+      const isBigItem = document.getElementById('isBigItem').checked;
 
       if (!trackingNumber || !recipientPhone) {
         showResultError('请填写运单号和手机号');
@@ -153,7 +158,7 @@
       fetch('/api/packages/scan-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trackingNumber, recipientPhone, recipientName })
+        body: JSON.stringify({ trackingNumber, recipientPhone, recipientName, isBigItem })
       })
       .then(res => res.json())
       .then(data => {
@@ -174,14 +179,17 @@
 
     function showResultSuccess(data) {
       const pkg = data.package;
+      const shelf = data.shelf;
       const resultDiv = document.getElementById('scanResult');
+      const isBigItem = pkg.is_big_item === 1 || pkg.is_big_item === true;
+      const bigItemBadge = isBigItem ? '<span class="badge badge-abnormal" style="margin-left:8px;">大件</span>' : '';
       resultDiv.innerHTML = `
         <div style="width: 100%;">
           <div class="alert alert-success">
             ✅ 入库成功！已发送取件通知（短信 + APP推送）
           </div>
           <div class="shelf-code-display">
-            ${pkg.shelf_code}
+            ${pkg.shelf_code}${bigItemBadge}
           </div>
           <div class="result-item">
             <span class="result-label">运单号：</span>
@@ -194,6 +202,10 @@
           <div class="result-item">
             <span class="result-label">收件人：</span>
             <span class="result-value">${pkg.recipient_name || '-'}</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">货架区域：</span>
+            <span class="result-value">${shelf ? shelf.zone + '区 第' + shelf.row_num + '排' : '-'}</span>
           </div>
           <div class="result-item">
             <span class="result-label">入库时间：</span>

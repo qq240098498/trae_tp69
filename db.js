@@ -9,11 +9,15 @@ let db = {
   packages: [],
   notifications: [],
   returnOrders: [],
+  shelfActivity: [],
+  bigItemWarnings: [],
   nextIds: {
     shelves: 1,
     packages: 1,
     notifications: 1,
-    returnOrders: 1
+    returnOrders: 1,
+    shelfActivity: 1,
+    bigItemWarnings: 1
   }
 };
 
@@ -30,11 +34,15 @@ function loadDb() {
   if (!db.packages) db.packages = [];
   if (!db.notifications) db.notifications = [];
   if (!db.returnOrders) db.returnOrders = [];
+  if (!db.shelfActivity) db.shelfActivity = [];
+  if (!db.bigItemWarnings) db.bigItemWarnings = [];
   if (!db.nextIds) db.nextIds = {};
   if (typeof db.nextIds.shelves !== 'number') db.nextIds.shelves = 1;
   if (typeof db.nextIds.packages !== 'number') db.nextIds.packages = 1;
   if (typeof db.nextIds.notifications !== 'number') db.nextIds.notifications = 1;
   if (typeof db.nextIds.returnOrders !== 'number') db.nextIds.returnOrders = 1;
+  if (typeof db.nextIds.shelfActivity !== 'number') db.nextIds.shelfActivity = 1;
+  if (typeof db.nextIds.bigItemWarnings !== 'number') db.nextIds.bigItemWarnings = 1;
 }
 
 function saveDb() {
@@ -51,7 +59,8 @@ function initDatabase() {
     const zones = ['A', 'B', 'C'];
     const rows = 5;
     const cols = 4;
-    
+    const bigItemZones = ['C'];
+
     for (const zone of zones) {
       for (let r = 1; r <= rows; r++) {
         for (let c = 1; c <= cols; c++) {
@@ -64,6 +73,11 @@ function initDatabase() {
             col_num: c,
             is_occupied: 0,
             current_package_id: null,
+            is_big_item_zone: bigItemZones.includes(zone) ? 1 : 0,
+            in_count: 0,
+            out_count: 0,
+            total_activity: 0,
+            last_activity_time: null,
             created_at: new Date().toISOString()
           });
         }
@@ -71,6 +85,31 @@ function initDatabase() {
     }
     saveDb();
     console.log('初始化货架完成，共', zones.length * rows * cols, '个货架位');
+  } else {
+    let needsSave = false;
+    for (const shelf of db.shelves) {
+      if (typeof shelf.is_big_item_zone === 'undefined') {
+        shelf.is_big_item_zone = shelf.zone === 'C' ? 1 : 0;
+        needsSave = true;
+      }
+      if (typeof shelf.in_count === 'undefined') {
+        shelf.in_count = 0;
+        needsSave = true;
+      }
+      if (typeof shelf.out_count === 'undefined') {
+        shelf.out_count = 0;
+        needsSave = true;
+      }
+      if (typeof shelf.total_activity === 'undefined') {
+        shelf.total_activity = 0;
+        needsSave = true;
+      }
+      if (typeof shelf.last_activity_time === 'undefined') {
+        shelf.last_activity_time = null;
+        needsSave = true;
+      }
+    }
+    if (needsSave) saveDb();
   }
 }
 
@@ -92,8 +131,31 @@ function getPackageById(id) {
   return db.packages.find(p => p.id === parseInt(id)) || null;
 }
 
+function recordShelfActivity(shelfId, activityType) {
+  const shelf = db.shelves.find(s => s.id === shelfId);
+  if (!shelf) return;
+
+  const now = new Date().toISOString();
+  
+  if (activityType === 'in') {
+    shelf.in_count = (shelf.in_count || 0) + 1;
+  } else if (activityType === 'out') {
+    shelf.out_count = (shelf.out_count || 0) + 1;
+  }
+  shelf.total_activity = (shelf.in_count || 0) + (shelf.out_count || 0);
+  shelf.last_activity_time = now;
+
+  db.shelfActivity.push({
+    id: db.nextIds.shelfActivity++,
+    shelf_id: shelfId,
+    shelf_code: shelf.shelf_code,
+    activity_type: activityType,
+    activity_time: now
+  });
+}
+
 function createPackage(packageData) {
-  const { trackingNumber, recipientPhone, recipientName, shelfId, shelfCode } = packageData;
+  const { trackingNumber, recipientPhone, recipientName, shelfId, shelfCode, isBigItem = false } = packageData;
   
   const newPkg = {
     id: db.nextIds.packages++,
@@ -111,6 +173,7 @@ function createPackage(packageData) {
     reminder_count: 0,
     last_reminder_time: null,
     note: '',
+    is_big_item: isBigItem ? 1 : 0,
     created_at: new Date().toISOString()
   };
 
@@ -120,6 +183,7 @@ function createPackage(packageData) {
   if (shelf) {
     shelf.is_occupied = 1;
     shelf.current_package_id = newPkg.id;
+    recordShelfActivity(shelfId, 'in');
   }
 
   saveDb();
@@ -163,6 +227,7 @@ function pickupPackage(trackingNumber, signature) {
     if (shelf) {
       shelf.is_occupied = 0;
       shelf.current_package_id = null;
+      recordShelfActivity(pkg.shelf_id, 'out');
     }
   }
 
@@ -466,6 +531,205 @@ function getReturnOrderStats() {
   return summary;
 }
 
+function getHeatmapData() {
+  const shelves = getAllShelves();
+  const allActivities = shelves.map(s => s.total_activity || 0);
+  const maxActivity = Math.max(...allActivities, 1);
+
+  return shelves.map(shelf => {
+    const activity = shelf.total_activity || 0;
+    const intensity = activity / maxActivity;
+    
+    let heatLevel;
+    if (intensity >= 0.75) heatLevel = 'hot';
+    else if (intensity >= 0.5) heatLevel = 'warm';
+    else if (intensity >= 0.25) heatLevel = 'mild';
+    else if (intensity > 0) heatLevel = 'cool';
+    else heatLevel = 'cold';
+
+    return {
+      ...shelf,
+      activity,
+      in_count: shelf.in_count || 0,
+      out_count: shelf.out_count || 0,
+      intensity,
+      heat_level: heatLevel
+    };
+  });
+}
+
+function getHeatmapStats() {
+  const heatmapData = getHeatmapData();
+  const stats = {
+    total: heatmapData.length,
+    hot: heatmapData.filter(s => s.heat_level === 'hot').length,
+    warm: heatmapData.filter(s => s.heat_level === 'warm').length,
+    mild: heatmapData.filter(s => s.heat_level === 'mild').length,
+    cool: heatmapData.filter(s => s.heat_level === 'cool').length,
+    cold: heatmapData.filter(s => s.heat_level === 'cold').length,
+    total_activity: heatmapData.reduce((sum, s) => sum + s.activity, 0)
+  };
+  return stats;
+}
+
+const MIDDLE_ROWS = [2, 3, 4];
+const HIGH_FREQUENCY_THRESHOLD = 0.6;
+
+function optimizeShelfPlacement() {
+  const heatmapData = getHeatmapData();
+  const maxActivity = Math.max(...heatmapData.map(s => s.activity), 1);
+  const threshold = maxActivity * HIGH_FREQUENCY_THRESHOLD;
+
+  const highFreqShelves = heatmapData.filter(s => s.activity >= threshold && s.activity > 0);
+  const lowFreqShelves = heatmapData.filter(s => s.activity < threshold);
+
+  const inMiddleRow = (s) => MIDDLE_ROWS.includes(s.row_num);
+  const notInMiddleRow = (s) => !MIDDLE_ROWS.includes(s.row_num);
+
+  const highFreqNotMiddle = highFreqShelves.filter(notInMiddleRow);
+  const lowFreqInMiddle = lowFreqShelves.filter(inMiddleRow);
+
+  const adjustments = [];
+  const maxSwaps = Math.min(highFreqNotMiddle.length, lowFreqInMiddle.length);
+
+  for (let i = 0; i < maxSwaps; i++) {
+    const highShelf = highFreqNotMiddle[i];
+    const lowShelf = lowFreqInMiddle[i];
+
+    if (highShelf.is_occupied === 0 && lowShelf.is_occupied === 0) {
+      adjustments.push({
+        type: 'swap_suggestion',
+        high_frequency_shelf: {
+          code: highShelf.shelf_code,
+          zone: highShelf.zone,
+          row: highShelf.row_num,
+          col: highShelf.col_num,
+          activity: highShelf.activity
+        },
+        low_frequency_shelf: {
+          code: lowShelf.shelf_code,
+          zone: lowShelf.zone,
+          row: lowShelf.row_num,
+          col: lowShelf.col_num,
+          activity: lowShelf.activity
+        },
+        reason: `高频货架位 ${highShelf.shelf_code} (${highShelf.activity}次) 建议调整到中下层 ${lowShelf.shelf_code}`
+      });
+    }
+  }
+
+  const highFreqInMiddle = highFreqShelves.filter(inMiddleRow);
+  for (const shelf of highFreqInMiddle) {
+    adjustments.push({
+      type: 'already_optimized',
+      shelf: {
+        code: shelf.shelf_code,
+        zone: shelf.zone,
+        row: shelf.row_num,
+        col: shelf.col_num,
+        activity: shelf.activity
+      },
+      reason: `高频货架位 ${shelf.shelf_code} 已在中下层，无需调整`
+    });
+  }
+
+  return {
+    threshold,
+    high_frequency_count: highFreqShelves.length,
+    low_frequency_count: lowFreqShelves.length,
+    adjustments,
+    middle_rows: MIDDLE_ROWS
+  };
+}
+
+function getBigItemZoneStatus() {
+  const bigItemShelves = db.shelves.filter(s => s.is_big_item_zone === 1);
+  const totalBigItem = bigItemShelves.length;
+  const occupiedBigItem = bigItemShelves.filter(s => s.is_occupied === 1).length;
+  const availableBigItem = totalBigItem - occupiedBigItem;
+  const usageRate = totalBigItem > 0 ? (occupiedBigItem / totalBigItem) : 0;
+
+  const WARNING_THRESHOLD = 0.8;
+
+  let warningLevel = 'normal';
+  let warningMessage = '';
+
+  if (usageRate >= WARNING_THRESHOLD) {
+    warningLevel = 'critical';
+    warningMessage = `大件区使用率已达 ${Math.round(usageRate * 100)}%，即将满载，请及时预留空间或清理大件！`;
+  } else if (usageRate >= 0.6) {
+    warningLevel = 'warning';
+    warningMessage = `大件区使用率已达 ${Math.round(usageRate * 100)}%，请留意大件库存。`;
+  }
+
+  const recentBigItems = db.packages
+    .filter(p => p.is_big_item === 1 && p.status !== 'picked')
+    .sort((a, b) => new Date(b.in_time) - new Date(a.in_time))
+    .slice(0, 10);
+
+  return {
+    total: totalBigItem,
+    occupied: occupiedBigItem,
+    available: availableBigItem,
+    usage_rate: usageRate,
+    warning_level: warningLevel,
+    warning_message: warningMessage,
+    warning_threshold: WARNING_THRESHOLD,
+    recent_big_items: recentBigItems,
+    big_item_zones: [...new Set(bigItemShelves.map(s => s.zone))]
+  };
+}
+
+function createBigItemWarning(warningData) {
+  const warning = {
+    id: db.nextIds.bigItemWarnings++,
+    type: warningData.type || 'capacity_warning',
+    message: warningData.message,
+    zone: warningData.zone || null,
+    severity: warningData.severity || 'warning',
+    resolved: 0,
+    created_at: new Date().toISOString(),
+    resolved_at: null
+  };
+  db.bigItemWarnings.push(warning);
+  saveDb();
+  return warning;
+}
+
+function getBigItemWarnings() {
+  return [...db.bigItemWarnings].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+function findOptimalEmptyShelf(isBigItem = false) {
+  const heatmapData = getHeatmapData();
+  const maxActivity = Math.max(...heatmapData.map(s => s.activity), 1);
+
+  let candidates = db.shelves.filter(s => s.is_occupied === 0);
+
+  if (isBigItem) {
+    const bigItemCandidates = candidates.filter(s => s.is_big_item_zone === 1);
+    if (bigItemCandidates.length > 0) {
+      candidates = bigItemCandidates;
+    }
+  } else {
+    const nonBigItemCandidates = candidates.filter(s => s.is_big_item_zone === 0);
+    if (nonBigItemCandidates.length > 0) {
+      candidates = nonBigItemCandidates;
+    }
+  }
+
+  if (candidates.length === 0) return null;
+
+  return candidates
+    .map(s => {
+      const activity = s.total_activity || 0;
+      const inMiddle = MIDDLE_ROWS.includes(s.row_num) ? 1 : 0;
+      const score = inMiddle * 1000 + (maxActivity - activity);
+      return { shelf: s, score };
+    })
+    .sort((a, b) => b.score - a.score)[0].shelf;
+}
+
 module.exports = {
   initDatabase,
   findNearestEmptyShelf,
@@ -494,4 +758,11 @@ module.exports = {
   reconcileReturnOrder,
   reconcileAllReturnOrders,
   getReturnOrderStats,
+  getHeatmapData,
+  getHeatmapStats,
+  optimizeShelfPlacement,
+  getBigItemZoneStatus,
+  createBigItemWarning,
+  getBigItemWarnings,
+  findOptimalEmptyShelf,
 };

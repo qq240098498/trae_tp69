@@ -31,6 +31,13 @@ const {
   reconcileReturnOrder,
   reconcileAllReturnOrders,
   getReturnOrderStats,
+  getHeatmapData,
+  getHeatmapStats,
+  optimizeShelfPlacement,
+  getBigItemZoneStatus,
+  createBigItemWarning,
+  getBigItemWarnings,
+  findOptimalEmptyShelf,
 } = require('./db');
 
 const dataDir = path.join(__dirname, 'data');
@@ -118,11 +125,12 @@ app.get('/api/packages/tracking/:trackingNumber', (req, res) => {
 
 app.post('/api/packages/scan-in', (req, res) => {
   try {
-    let { trackingNumber, recipientPhone, recipientName } = req.body;
+    let { trackingNumber, recipientPhone, recipientName, isBigItem } = req.body;
 
     trackingNumber = trackingNumber ? trackingNumber.trim() : '';
     recipientPhone = recipientPhone ? recipientPhone.trim() : '';
     recipientName = recipientName ? recipientName.trim() : '';
+    isBigItem = isBigItem === true || isBigItem === 'true' || isBigItem === 1 || isBigItem === '1';
 
     const trackingError = validateTrackingNumber(trackingNumber);
     if (trackingError) {
@@ -143,7 +151,7 @@ app.post('/api/packages/scan-in', (req, res) => {
       return res.status(400).json({ error: '该运单号的快递已在库中' });
     }
 
-    const shelf = findNearestEmptyShelf();
+    const shelf = findOptimalEmptyShelf(isBigItem);
     if (!shelf) {
       return res.status(500).json({ error: '货架位已满，请先清理或增加货架' });
     }
@@ -154,6 +162,7 @@ app.post('/api/packages/scan-in', (req, res) => {
       recipientName: recipientName || '',
       shelfId: shelf.id,
       shelfCode: shelf.shelf_code,
+      isBigItem,
     });
 
     const smsContent = generateNotificationContent(newPkg);
@@ -175,6 +184,18 @@ app.post('/api/packages/scan-in', (req, res) => {
       type: 'app_push',
       content: smsContent,
     });
+
+    if (isBigItem) {
+      const bigItemStatus = getBigItemZoneStatus();
+      if (bigItemStatus.warning_level === 'critical') {
+        createBigItemWarning({
+          type: 'capacity_warning',
+          message: bigItemStatus.warning_message,
+          zone: bigItemStatus.big_item_zones.join(','),
+          severity: 'critical'
+        });
+      }
+    }
 
     res.json({
       success: true,
@@ -530,6 +551,71 @@ app.get('/api/stats', (req, res) => {
         ...stats,
         shelf: shelfStats,
       },
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/shelves/heatmap', (req, res) => {
+  try {
+    const heatmapData = getHeatmapData();
+    const heatmapStats = getHeatmapStats();
+    res.json({
+      success: true,
+      data: {
+        shelves: heatmapData,
+        stats: heatmapStats
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/shelves/optimize', (req, res) => {
+  try {
+    const optimization = optimizeShelfPlacement();
+    res.json({
+      success: true,
+      data: optimization
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/shelves/big-item-status', (req, res) => {
+  try {
+    const status = getBigItemZoneStatus();
+    res.json({
+      success: true,
+      data: status
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/shelves/big-item-warnings', (req, res) => {
+  try {
+    const warnings = getBigItemWarnings();
+    res.json({
+      success: true,
+      data: warnings
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/shelves/big-item-warnings', (req, res) => {
+  try {
+    const warning = createBigItemWarning(req.body);
+    res.json({
+      success: true,
+      data: warning,
+      message: '预警已创建'
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

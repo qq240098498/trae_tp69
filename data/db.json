@@ -8,7 +8,12 @@
       "col_num": 1,
       "is_occupied": 1,
       "current_package_id": 4,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 2,
@@ -18,7 +23,12 @@
       "col_num": 2,
       "is_occupied": 1,
       "current_package_id": 2,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 3,
@@ -28,7 +38,12 @@
       "col_num": 3,
       "is_occupied": 1,
       "current_package_id": 3,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 4,
@@ -38,7 +53,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 5,
@@ -48,7 +68,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 1,
+      "out_count": 1,
+      "total_activity": 2,
+      "last_activity_time": "2026-06-21T06:36:33.899Z"
     },
     {
       "id": 6,
@@ -58,7 +83,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 7,
@@ -68,7 +98,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 8,
@@ -78,7 +113,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 9,
@@ -88,7 +128,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 10,
@@ -98,7 +143,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 11,
@@ -108,7 +158,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 12,
@@ -118,7 +173,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 13,
@@ -128,7 +188,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 14,
@@ -138,7 +203,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 15,
@@ -148,7 +218,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 16,
@@ -158,7 +233,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 17,
@@ -168,7 +248,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 18,
@@ -178,7 +263,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 19,
@@ -188,7 +278,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 20,
@@ -198,7 +293,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 21,
@@ -208,7 +308,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 22,
@@ -218,7 +323,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 23,
@@ -228,7 +338,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 24,
@@ -238,7 +353,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 25,
@@ -248,7 +368,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 26,
@@ -258,7 +383,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 27,
@@ -268,7 +398,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 28,
@@ -278,7 +413,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 29,
@@ -288,7 +428,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 30,
@@ -298,7 +443,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 31,
@@ -308,7 +458,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 32,
@@ -318,7 +473,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 33,
@@ -328,7 +488,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 34,
@@ -338,7 +503,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 35,
@@ -348,7 +518,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 36,
@@ -358,7 +533,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 37,
@@ -368,7 +548,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 38,
@@ -378,7 +563,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 39,
@@ -388,7 +578,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 40,
@@ -398,7 +593,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 0,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 41,
@@ -408,7 +608,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 42,
@@ -418,7 +623,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 43,
@@ -428,7 +638,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 44,
@@ -438,7 +653,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 45,
@@ -446,9 +666,14 @@
       "zone": "C",
       "row_num": 2,
       "col_num": 1,
-      "is_occupied": 0,
-      "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "is_occupied": 1,
+      "current_package_id": 6,
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 1,
+      "in_count": 1,
+      "out_count": 0,
+      "total_activity": 1,
+      "last_activity_time": "2026-06-21T06:35:59.521Z"
     },
     {
       "id": 46,
@@ -458,7 +683,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.906Z"
+      "created_at": "2026-06-21T02:31:34.906Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 47,
@@ -468,7 +698,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 48,
@@ -478,7 +713,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 49,
@@ -488,7 +728,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 50,
@@ -498,7 +743,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 51,
@@ -508,7 +758,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 52,
@@ -518,7 +773,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 53,
@@ -528,7 +788,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 54,
@@ -538,7 +803,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 55,
@@ -548,7 +818,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 56,
@@ -558,7 +833,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 57,
@@ -568,7 +848,12 @@
       "col_num": 1,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 58,
@@ -578,7 +863,12 @@
       "col_num": 2,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 59,
@@ -588,7 +878,12 @@
       "col_num": 3,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     },
     {
       "id": 60,
@@ -598,7 +893,12 @@
       "col_num": 4,
       "is_occupied": 0,
       "current_package_id": null,
-      "created_at": "2026-06-21T02:31:34.907Z"
+      "created_at": "2026-06-21T02:31:34.907Z",
+      "is_big_item_zone": 1,
+      "in_count": 0,
+      "out_count": 0,
+      "total_activity": 0,
+      "last_activity_time": null
     }
   ],
   "packages": [
@@ -673,6 +973,44 @@
       "last_reminder_time": null,
       "note": "",
       "created_at": "2026-06-21T02:36:31.029Z"
+    },
+    {
+      "id": 5,
+      "tracking_number": "TEST001",
+      "recipient_phone": "13800138000",
+      "recipient_name": "??",
+      "shelf_id": 5,
+      "shelf_code": "A-2-1",
+      "status": "picked",
+      "in_time": "2026-06-21T06:35:53.276Z",
+      "out_time": "2026-06-21T06:36:33.899Z",
+      "signature": "????",
+      "is_overdue": 0,
+      "is_abnormal": 0,
+      "reminder_count": 0,
+      "last_reminder_time": null,
+      "note": "",
+      "is_big_item": 0,
+      "created_at": "2026-06-21T06:35:53.277Z"
+    },
+    {
+      "id": 6,
+      "tracking_number": "BIG001",
+      "recipient_phone": "13900139000",
+      "recipient_name": "??",
+      "shelf_id": 45,
+      "shelf_code": "C-2-1",
+      "status": "in_stock",
+      "in_time": "2026-06-21T06:35:59.521Z",
+      "out_time": null,
+      "signature": null,
+      "is_overdue": 0,
+      "is_abnormal": 0,
+      "reminder_count": 0,
+      "last_reminder_time": null,
+      "note": "",
+      "is_big_item": 1,
+      "created_at": "2026-06-21T06:35:59.521Z"
     }
   ],
   "notifications": [
@@ -765,13 +1103,55 @@
       "content": "【快递代收点】您的快递已到达代收点，运单号：13213，货架位：A-1-1，请凭手机号后4位及时取件。",
       "status": "sent",
       "sent_at": "2026-06-21T02:36:31.061Z"
+    },
+    {
+      "id": 10,
+      "package_id": 5,
+      "tracking_number": "TEST001",
+      "recipient_phone": "13800138000",
+      "type": "sms",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：TEST001，货架位：A-2-1，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T06:35:53.279Z"
+    },
+    {
+      "id": 11,
+      "package_id": 5,
+      "tracking_number": "TEST001",
+      "recipient_phone": "13800138000",
+      "type": "app_push",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：TEST001，货架位：A-2-1，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T06:35:53.293Z"
+    },
+    {
+      "id": 12,
+      "package_id": 6,
+      "tracking_number": "BIG001",
+      "recipient_phone": "13900139000",
+      "type": "sms",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：BIG001，货架位：C-2-1，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T06:35:59.522Z"
+    },
+    {
+      "id": 13,
+      "package_id": 6,
+      "tracking_number": "BIG001",
+      "recipient_phone": "13900139000",
+      "type": "app_push",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：BIG001，货架位：C-2-1，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T06:35:59.534Z"
     }
   ],
   "nextIds": {
     "shelves": 61,
-    "packages": 5,
-    "notifications": 10,
-    "returnOrders": 7
+    "packages": 7,
+    "notifications": 14,
+    "returnOrders": 7,
+    "shelfActivity": 4,
+    "bigItemWarnings": 1
   },
   "returnOrders": [
     {
@@ -859,5 +1239,29 @@
       "created_at": "2026-06-21T05:16:54.416Z",
       "updated_at": "2026-06-21T06:08:37.767Z"
     }
-  ]
+  ],
+  "shelfActivity": [
+    {
+      "id": 1,
+      "shelf_id": 5,
+      "shelf_code": "A-2-1",
+      "activity_type": "in",
+      "activity_time": "2026-06-21T06:35:53.277Z"
+    },
+    {
+      "id": 2,
+      "shelf_id": 45,
+      "shelf_code": "C-2-1",
+      "activity_type": "in",
+      "activity_time": "2026-06-21T06:35:59.521Z"
+    },
+    {
+      "id": 3,
+      "shelf_id": 5,
+      "shelf_code": "A-2-1",
+      "activity_type": "out",
+      "activity_time": "2026-06-21T06:36:33.899Z"
+    }
+  ],
+  "bigItemWarnings": []
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>货架状态 - 快递代收点管理系统</title>
+  <title>货架状态与热力图 - 快递代收点管理系统</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -21,9 +21,11 @@
 
   <main class="main-content">
     <div class="page-header">
-      <h1>货架状态</h1>
-      <p>实时查看货架使用情况，自动分配最近空位</p>
+      <h1>货架状态与热力图</h1>
+      <p>实时查看货架使用情况、出入频次热力图、智能优化建议和大件区预警</p>
     </div>
+
+    <div id="warningContainer"></div>
 
     <div class="stats-grid">
       <div class="stat-card">
@@ -42,28 +44,154 @@
         <div class="stat-label">使用率</div>
         <div class="stat-value" id="usageRate">0%</div>
       </div>
-    </div>
-
-    <div class="card">
-      <h2>🗺️ 货架分布图</h2>
-      <div style="margin-bottom: 15px;">
-        <span style="display: inline-flex; align-items: center; margin-right: 20px;">
-          <span style="display: inline-block; width: 20px; height: 20px; background: #e8f5e9; border: 1px dashed #a5d6a7; border-radius: 4px; margin-right: 8px;"></span>
-          空闲
-        </span>
-        <span style="display: inline-flex; align-items: center;">
-          <span style="display: inline-block; width: 20px; height: 20px; background: #ffecb3; border: 1px solid #ffd54f; border-radius: 4px; margin-right: 8px;"></span>
-          已占用
-        </span>
-      </div>
-      
-      <div class="shelf-grid" id="shelfGrid">
-        加载中...
+      <div class="stat-card">
+        <div class="stat-label">总出入频次</div>
+        <div class="stat-value" id="totalActivity">0</div>
       </div>
     </div>
 
     <div class="card">
-      <h2>📋 货架明细</h2>
+      <div class="tabs">
+        <div class="tab active" data-tab="heatmap">🔥 热力图</div>
+        <div class="tab" data-tab="distribution">🗺️ 分布图</div>
+        <div class="tab" data-tab="optimize">⚡ 优化建议</div>
+        <div class="tab" data-tab="bigitem">📦 大件区</div>
+      </div>
+
+      <div class="tabs-content active" id="tab-heatmap">
+        <div class="heatmap-stats">
+          <div class="heatmap-stat-item">
+            <div class="value" id="hotCount" style="color: #c62828;">0</div>
+            <div class="label">🔥 高频位 (热)</div>
+          </div>
+          <div class="heatmap-stat-item">
+            <div class="value" id="warmCount" style="color: #e65100;">0</div>
+            <div class="label">🌡️ 较热位 (温)</div>
+          </div>
+          <div class="heatmap-stat-item">
+            <div class="value" id="mildCount" style="color: #f57f17;">0</div>
+            <div class="label">☀️ 中频段 (和)</div>
+          </div>
+          <div class="heatmap-stat-item">
+            <div class="value" id="coolCount" style="color: #2e7d32;">0</div>
+            <div class="label">🌿 低频位 (凉)</div>
+          </div>
+          <div class="heatmap-stat-item">
+            <div class="value" id="coldCount" style="color: #1565c0;">0</div>
+            <div class="label">❄️ 无频次 (冷)</div>
+          </div>
+        </div>
+
+        <div class="heatmap-legend">
+          <div class="heatmap-legend-item">
+            <span class="heatmap-legend-color" style="background: #ffcdd2; border: 2px solid #ef5350;"></span>
+            高频热区 (75%+)
+          </div>
+          <div class="heatmap-legend-item">
+            <span class="heatmap-legend-color" style="background: #ffe0b2; border: 1px solid #ffb74d;"></span>
+            较热区 (50%-75%)
+          </div>
+          <div class="heatmap-legend-item">
+            <span class="heatmap-legend-color" style="background: #fff9c4; border: 1px solid #fff176;"></span>
+            中等区 (25%-50%)
+          </div>
+          <div class="heatmap-legend-item">
+            <span class="heatmap-legend-color" style="background: #c8e6c9; border: 1px solid #81c784;"></span>
+            低频区 (0-25%)
+          </div>
+          <div class="heatmap-legend-item">
+            <span class="heatmap-legend-color" style="background: #e3f2fd; border: 1px solid #90caf9;"></span>
+            无频次区
+          </div>
+          <div class="heatmap-legend-item">
+            <span class="heatmap-legend-color" style="background: #f3e5f5; border: 1px solid #ce93d8;"></span>
+            大件专用区
+          </div>
+        </div>
+
+        <div class="shelf-grid" id="heatmapGrid" style="margin-top: 20px;">
+          加载中...
+        </div>
+      </div>
+
+      <div class="tabs-content" id="tab-distribution">
+        <div style="margin-bottom: 15px;">
+          <span style="display: inline-flex; align-items: center; margin-right: 20px;">
+            <span style="display: inline-block; width: 20px; height: 20px; background: #e8f5e9; border: 1px dashed #a5d6a7; border-radius: 4px; margin-right: 8px;"></span>
+            空闲
+          </span>
+          <span style="display: inline-flex; align-items: center; margin-right: 20px;">
+            <span style="display: inline-block; width: 20px; height: 20px; background: #ffecb3; border: 1px solid #ffd54f; border-radius: 4px; margin-right: 8px;"></span>
+            已占用
+          </span>
+          <span style="display: inline-flex; align-items: center;">
+            <span style="display: inline-block; width: 20px; height: 20px; background: #f3e5f5; border: 1px solid #ce93d8; border-radius: 4px; margin-right: 8px;"></span>
+            大件区
+          </span>
+        </div>
+        
+        <div class="shelf-grid" id="shelfGrid">
+          加载中...
+        </div>
+      </div>
+
+      <div class="tabs-content" id="tab-optimize">
+        <div style="margin-bottom: 15px; padding: 12px; background: #eaf2f8; border-radius: 6px; color: #1a5276; font-size: 13px;">
+          💡 <strong>智能优化说明：</strong>系统基于货架出入频次自动识别高频货架位，建议将高频位调整到中下层（第2-4排），减少取件弯腰或登高，提升操作效率。
+        </div>
+        <div id="optimizeContent">
+          加载中...
+        </div>
+      </div>
+
+      <div class="tabs-content" id="tab-bigitem">
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+          <div class="stat-card">
+            <div class="stat-label">大件区货架总数</div>
+            <div class="stat-value" id="bigItemTotal">0</div>
+          </div>
+          <div class="stat-card in-stock">
+            <div class="stat-label">已占用</div>
+            <div class="stat-value" id="bigItemOccupied">0</div>
+          </div>
+          <div class="stat-card today-in">
+            <div class="stat-label">空闲位</div>
+            <div class="stat-value" id="bigItemAvailable">0</div>
+          </div>
+          <div class="stat-card overdue">
+            <div class="stat-label">使用率</div>
+            <div class="stat-value" id="bigItemUsage">0%</div>
+          </div>
+        </div>
+        <div id="bigItemWarnings" style="margin-bottom: 15px;"></div>
+        <div class="card" style="margin-bottom: 0; padding: 0; box-shadow: none;">
+          <h2 style="margin-top: 20px;">📦 大件区货架分布</h2>
+          <div class="shelf-grid" id="bigItemGrid">
+            加载中...
+          </div>
+        </div>
+        <div style="margin-top: 20px;">
+          <h2 style="font-size: 16px; margin-bottom: 15px; color: #1e2a38;">📋 在库大件列表</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>运单号</th>
+                <th>货架位</th>
+                <th>手机号</th>
+                <th>入库时间</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="bigItemTable">
+              <tr><td colspan="5" style="text-align: center; color: #999; padding: 20px;">暂无大件</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📋 货架明细（含出入频次）</h2>
       <table>
         <thead>
           <tr>
@@ -72,58 +200,97 @@
             <th>行</th>
             <th>列</th>
             <th>状态</th>
-            <th>当前快递</th>
+            <th>入库次数</th>
+            <th>出库次数</th>
+            <th>总频次</th>
+            <th>热度</th>
           </tr>
         </thead>
         <tbody id="shelfTable">
-          <tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
+          <tr><td colspan="9" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
         </tbody>
       </table>
     </div>
   </main>
 
   <script>
-    function loadShelves() {
-      fetch('/api/shelves')
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            const { shelves, stats } = data.data;
-            
-            document.getElementById('totalShelves').textContent = stats.total;
-            document.getElementById('occupiedShelves').textContent = stats.occupied;
-            document.getElementById('availableShelves').textContent = stats.available;
-            
-            const rate = stats.total > 0 ? Math.round((stats.occupied / stats.total) * 100) : 0;
-            document.getElementById('usageRate').textContent = rate + '%';
+    function loadAllData() {
+      Promise.all([
+        fetch('/api/shelves').then(r => r.json()),
+        fetch('/api/shelves/heatmap').then(r => r.json()),
+        fetch('/api/shelves/optimize').then(r => r.json()),
+        fetch('/api/shelves/big-item-status').then(r => r.json())
+      ]).then(([shelvesData, heatmapData, optimizeData, bigItemData]) => {
+        if (shelvesData.success) {
+          const { shelves, stats } = shelvesData.data;
+          document.getElementById('totalShelves').textContent = stats.total;
+          document.getElementById('occupiedShelves').textContent = stats.occupied;
+          document.getElementById('availableShelves').textContent = stats.available;
+          const rate = stats.total > 0 ? Math.round((stats.occupied / stats.total) * 100) : 0;
+          document.getElementById('usageRate').textContent = rate + '%';
 
-            renderShelfGrid(shelves);
-            renderShelfTable(shelves);
-          }
-        })
-        .catch(err => console.error(err));
+          renderDistributionGrid(shelves);
+        }
+
+        if (heatmapData.success) {
+          const { shelves, stats } = heatmapData.data;
+          document.getElementById('totalActivity').textContent = stats.total_activity;
+          document.getElementById('hotCount').textContent = stats.hot;
+          document.getElementById('warmCount').textContent = stats.warm;
+          document.getElementById('mildCount').textContent = stats.mild;
+          document.getElementById('coolCount').textContent = stats.cool;
+          document.getElementById('coldCount').textContent = stats.cold;
+
+          renderHeatmapGrid(shelves);
+          renderShelfTable(shelves);
+        }
+
+        if (optimizeData.success) {
+          renderOptimizeContent(optimizeData.data);
+        }
+
+        if (bigItemData.success) {
+          renderBigItemContent(bigItemData.data);
+          renderWarningBanner(bigItemData.data);
+        }
+      }).catch(err => console.error(err));
     }
 
-    function renderShelfGrid(shelves) {
+    function renderWarningBanner(bigItemStatus) {
+      const container = document.getElementById('warningContainer');
+      let icon = '';
+      let msg = '';
+      if (bigItemStatus.warning_level === 'critical') {
+        icon = '🚨';
+        msg = bigItemStatus.warning_message;
+      } else if (bigItemStatus.warning_level === 'warning') {
+        icon = '⚠️';
+        msg = bigItemStatus.warning_message;
+      } else {
+        icon = '✅';
+        msg = `大件区状态正常，使用率 ${Math.round(bigItemStatus.usage_rate * 100)}%，预留空间充足。`;
+      }
+      container.innerHTML = `<div class="warning-banner ${bigItemStatus.warning_level}"><span style="font-size: 24px;">${icon}</span><span>${msg}</span></div>`;
+    }
+
+    function renderHeatmapGrid(shelves) {
       const zones = {};
       shelves.forEach(shelf => {
-        if (!zones[shelf.zone]) {
-          zones[shelf.zone] = [];
-        }
+        if (!zones[shelf.zone]) zones[shelf.zone] = [];
         zones[shelf.zone].push(shelf);
       });
 
-      const gridDiv = document.getElementById('shelfGrid');
+      const gridDiv = document.getElementById('heatmapGrid');
       let html = '';
-
       for (const zone in zones) {
-        const zoneShelves = zones[zone.zone];
+        const zoneShelves = zones[zone];
         const rows = Math.max(...zoneShelves.map(s => s.row_num));
         const cols = Math.max(...zoneShelves.map(s => s.col_num));
+        const isBigItemZone = zoneShelves[0].is_big_item_zone === 1;
 
         html += `
           <div class="shelf-zone">
-            <h3>${zone} 区</h3>
+            <h3>${zone} 区${isBigItemZone ? ' <span class="badge badge-abnormal">大件专用</span>' : ''}</h3>
             <div class="shelf-rows">
         `;
 
@@ -132,27 +299,89 @@
           for (let c = 1; c <= cols; c++) {
             const shelf = zoneShelves.find(s => s.row_num === r && s.col_num === c);
             if (shelf) {
-              const statusClass = shelf.is_occupied ? 'occupied' : 'empty';
-              const title = shelf.is_occupied ? `已占用 - ${shelf.shelf_code}` : `空闲 - ${shelf.shelf_code}`;
-              html += `<div class="shelf-cell ${statusClass}" title="${title}">${shelf.shelf_code}</div>`;
+              const heatClass = `heat-${shelf.heat_level}`;
+              const bigItemClass = shelf.is_big_item_zone === 1 ? 'big-item-zone' : '';
+              const title = `${shelf.shelf_code} | 入库:${shelf.in_count}次 出库:${shelf.out_count}次 总计:${shelf.activity}次 | ${getHeatLabel(shelf.heat_level)}`;
+              html += `<div class="shelf-cell ${heatClass} ${bigItemClass}" title="${title}">
+                <div>${shelf.shelf_code}</div>
+                <div class="activity-count">${shelf.activity}次</div>
+              </div>`;
             }
           }
           html += `</div>`;
         }
-
         html += `</div></div>`;
       }
+      gridDiv.innerHTML = html;
+    }
 
+    function getHeatLabel(level) {
+      const labels = {
+        'hot': '高频热区',
+        'warm': '较热区',
+        'mild': '中等区',
+        'cool': '低频区',
+        'cold': '无频次'
+      };
+      return labels[level] || level;
+    }
+
+    function renderDistributionGrid(shelves) {
+      const zones = {};
+      shelves.forEach(shelf => {
+        if (!zones[shelf.zone]) zones[shelf.zone] = [];
+        zones[shelf.zone].push(shelf);
+      });
+
+      const gridDiv = document.getElementById('shelfGrid');
+      let html = '';
+      for (const zone in zones) {
+        const zoneShelves = zones[zone];
+        const rows = Math.max(...zoneShelves.map(s => s.row_num));
+        const cols = Math.max(...zoneShelves.map(s => s.col_num));
+        const isBigItemZone = zoneShelves[0].is_big_item_zone === 1;
+
+        html += `
+          <div class="shelf-zone">
+            <h3>${zone} 区${isBigItemZone ? ' <span class="badge badge-abnormal">大件专用</span>' : ''}</h3>
+            <div class="shelf-rows">
+        `;
+
+        for (let r = 1; r <= rows; r++) {
+          html += `<div class="shelf-row"><span class="shelf-row-label">第${r}排</span>`;
+          for (let c = 1; c <= cols; c++) {
+            const shelf = zoneShelves.find(s => s.row_num === r && s.col_num === c);
+            if (shelf) {
+              let statusClass = shelf.is_occupied ? 'occupied' : 'empty';
+              const bigItemClass = shelf.is_big_item_zone === 1 ? 'big-item-zone' : '';
+              const title = shelf.is_occupied ? `已占用 - ${shelf.shelf_code}` : `空闲 - ${shelf.shelf_code}`;
+              html += `<div class="shelf-cell ${statusClass} ${bigItemClass}" title="${title}">${shelf.shelf_code}</div>`;
+            }
+          }
+          html += `</div>`;
+        }
+        html += `</div></div>`;
+      }
       gridDiv.innerHTML = html;
     }
 
     function renderShelfTable(shelves) {
       const tbody = document.getElementById('shelfTable');
-      
+      const heatBadge = (level) => {
+        const map = {
+          'hot': '<span class="badge badge-overdue">🔥 高频</span>',
+          'warm': '<span class="badge" style="background:#ffe0b2;color:#e65100;">🌡️ 较热</span>',
+          'mild': '<span class="badge" style="background:#fff9c4;color:#f57f17;">☀️ 中等</span>',
+          'cool': '<span class="badge badge-in-stock">🌿 低频</span>',
+          'cold': '<span class="badge" style="background:#e3f2fd;color:#1565c0;">❄️ 无频次</span>'
+        };
+        return map[level] || '';
+      };
+
       tbody.innerHTML = shelves.map(shelf => `
         <tr>
           <td><strong>${shelf.shelf_code}</strong></td>
-          <td>${shelf.zone} 区</td>
+          <td>${shelf.zone} 区${shelf.is_big_item_zone === 1 ? ' <span class="badge badge-abnormal">大件</span>' : ''}</td>
           <td>第 ${shelf.row_num} 排</td>
           <td>第 ${shelf.col_num} 列</td>
           <td>
@@ -161,13 +390,161 @@
               '<span class="badge badge-in-stock">空闲</span>'
             }
           </td>
-          <td>${shelf.current_package_id ? '有快递' : '-'}</td>
+          <td>${shelf.in_count || 0}</td>
+          <td>${shelf.out_count || 0}</td>
+          <td><strong>${shelf.activity || 0}</strong></td>
+          <td>${heatBadge(shelf.heat_level)}</td>
         </tr>
       `).join('');
     }
 
-    loadShelves();
-    setInterval(loadShelves, 30000);
+    function renderOptimizeContent(data) {
+      const container = document.getElementById('optimizeContent');
+      const { threshold, high_frequency_count, low_frequency_count, adjustments, middle_rows } = data;
+
+      let html = `
+        <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 13px;">
+          <p><strong>📊 分析结果：</strong></p>
+          <p>• 高频阈值：≥ ${Math.round(threshold)} 次出入</p>
+          <p>• 高频货架位数：${high_frequency_count} 个</p>
+          <p>• 低频货架位数：${low_frequency_count} 个</p>
+          <p>• 推荐中下层：第 ${middle_rows.join('、')} 排</p>
+        </div>
+      `;
+
+      if (adjustments.length === 0) {
+        html += '<div class="empty-state"><div style="font-size: 48px;">✨</div><p>暂无优化建议</p></div>';
+      } else {
+        html += '<ul class="optimization-list">';
+        adjustments.forEach(adj => {
+          if (adj.type === 'swap_suggestion') {
+            html += `
+              <li class="optimization-item swap">
+                <div>🔄 <strong>建议调整：</strong></div>
+                <div class="optimization-reason">
+                  ${adj.reason}
+                </div>
+                <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                  高频位 ${adj.high_frequency_shelf.code} (第${adj.high_frequency_shelf.row}排, ${adj.high_frequency_shelf.activity}次) 
+                  ↔ 
+                  低频位 ${adj.low_frequency_shelf.code} (第${adj.low_frequency_shelf.row}排, ${adj.low_frequency_shelf.activity}次)
+                </div>
+              </li>
+            `;
+          } else if (adj.type === 'already_optimized') {
+            html += `
+              <li class="optimization-item optimized">
+                <div>✅ <strong>已优化：</strong></div>
+                <div class="optimization-reason">${adj.reason}</div>
+              </li>
+            `;
+          }
+        });
+        html += '</ul>';
+      }
+
+      container.innerHTML = html;
+    }
+
+    function renderBigItemContent(data) {
+      document.getElementById('bigItemTotal').textContent = data.total;
+      document.getElementById('bigItemOccupied').textContent = data.occupied;
+      document.getElementById('bigItemAvailable').textContent = data.available;
+      document.getElementById('bigItemUsage').textContent = Math.round(data.usage_rate * 100) + '%';
+
+      const warningsDiv = document.getElementById('bigItemWarnings');
+      if (data.warning_level === 'critical') {
+        warningsDiv.innerHTML = `<div class="alert alert-error">🚨 ${data.warning_message}</div>`;
+      } else if (data.warning_level === 'warning') {
+        warningsDiv.innerHTML = `<div class="alert alert-warning">⚠️ ${data.warning_message}</div>`;
+      } else {
+        warningsDiv.innerHTML = `<div class="alert alert-success">✅ 大件区预留空间充足，使用率 ${Math.round(data.usage_rate * 100)}%</div>`;
+      }
+
+      const tbody = document.getElementById('bigItemTable');
+      if (data.recent_big_items && data.recent_big_items.length > 0) {
+        tbody.innerHTML = data.recent_big_items.map(pkg => `
+          <tr>
+            <td>${pkg.tracking_number}</td>
+            <td><strong>${pkg.shelf_code}</strong></td>
+            <td>${pkg.recipient_phone}</td>
+            <td>${formatTime(pkg.in_time)}</td>
+            <td>${getStatusBadge(pkg.status)}</td>
+          </tr>
+        `).join('');
+      }
+
+      const bigZones = {};
+      fetch('/api/shelves/heatmap').then(r => r.json()).then(heatmapData => {
+        if (heatmapData.success) {
+          const shelves = heatmapData.data.shelves.filter(s => s.is_big_item_zone === 1);
+          shelves.forEach(shelf => {
+            if (!bigZones[shelf.zone]) bigZones[shelf.zone] = [];
+            bigZones[shelf.zone].push(shelf);
+          });
+
+          const gridDiv = document.getElementById('bigItemGrid');
+          let html = '';
+          for (const zone in bigZones) {
+            const zoneShelves = bigZones[zone];
+            const rows = Math.max(...zoneShelves.map(s => s.row_num));
+            const cols = Math.max(...zoneShelves.map(s => s.col_num));
+            html += `
+              <div class="shelf-zone">
+                <h3>${zone} 区 <span class="badge badge-abnormal">大件专用</span></h3>
+                <div class="shelf-rows">
+            `;
+            for (let r = 1; r <= rows; r++) {
+              html += `<div class="shelf-row"><span class="shelf-row-label">第${r}排</span>`;
+              for (let c = 1; c <= cols; c++) {
+                const shelf = zoneShelves.find(s => s.row_num === r && s.col_num === c);
+                if (shelf) {
+                  let statusClass = shelf.is_occupied ? 'occupied' : 'empty';
+                  const heatClass = `heat-${shelf.heat_level}`;
+                  const title = `${shelf.shelf_code} | 入库:${shelf.in_count} 出库:${shelf.out_count} | ${shelf.is_occupied ? '已占用' : '空闲'}`;
+                  html += `<div class="shelf-cell ${statusClass} ${heatClass} big-item-zone" title="${title}">
+                    <div>${shelf.shelf_code}</div>
+                    <div class="activity-count">${shelf.activity}次</div>
+                  </div>`;
+                }
+              }
+              html += `</div>`;
+            }
+            html += `</div></div>`;
+          }
+          gridDiv.innerHTML = html;
+        }
+      });
+    }
+
+    function getStatusBadge(status) {
+      const statusMap = {
+        'in_stock': { text: '在库', class: 'badge-in-stock' },
+        'picked': { text: '已取件', class: 'badge-picked' },
+        'overdue': { text: '逾期', class: 'badge-overdue' },
+        'abnormal': { text: '异常', class: 'badge-abnormal' }
+      };
+      const s = statusMap[status] || { text: status, class: '' };
+      return `<span class="badge ${s.class}">${s.text}</span>`;
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return '-';
+      const d = new Date(timeStr);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tabs-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+      });
+    });
+
+    loadAllData();
+    setInterval(loadAllData, 30000);
   </script>
 </body>
 </html>
