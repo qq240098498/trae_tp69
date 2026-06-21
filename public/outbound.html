@@ -28,10 +28,32 @@
     <div class="two-col">
       <div class="card">
         <h2>📤 扫码出库</h2>
+        <div class="checkbox-group" style="margin-bottom: 15px;">
+          <input type="checkbox" id="isProxyPickup" name="isProxyPickup" onchange="toggleProxyMode()">
+          <label for="isProxyPickup">👥 代取模式（邻居代取）</label>
+        </div>
+
+        <div id="proxyPickupInfo" style="display: none; margin-bottom: 15px; padding: 12px; background: #eaf2f8; border-radius: 6px; border-left: 3px solid #3498db;">
+          <div style="font-size: 13px; color: #2874a6; font-weight: 500; margin-bottom: 4px;">
+            📌 代取模式
+          </div>
+          <div style="font-size: 12px; color: #555;">
+            请输入代取人信息，系统将验证代取权限
+          </div>
+        </div>
+
         <form id="scanOutForm">
           <div class="form-group">
             <label for="trackingNumber">运单号 *</label>
             <input type="text" id="trackingNumber" name="trackingNumber" placeholder="扫描或输入运单号" required autofocus maxlength="50">
+          </div>
+          <div class="form-group" id="pickupPhoneGroup" style="display: none;">
+            <label for="pickupPhone">代取人手机号 *</label>
+            <input type="tel" id="pickupPhone" name="pickupPhone" placeholder="输入代取人手机号" maxlength="20">
+          </div>
+          <div class="form-group" id="pickupNameGroup" style="display: none;">
+            <label for="pickupName">代取人姓名（选填）</label>
+            <input type="text" id="pickupName" name="pickupName" placeholder="输入代取人姓名" maxlength="50">
           </div>
           <button type="button" class="btn btn-primary" style="width: 100%;" onclick="queryPackage()">
             🔍 查询快递
@@ -102,7 +124,8 @@
         <thead>
           <tr>
             <th>运单号</th>
-            <th>手机号</th>
+            <th>收件人</th>
+            <th>取件方式</th>
             <th>货架位</th>
             <th>入库时间</th>
             <th>出库时间</th>
@@ -110,7 +133,7 @@
           </tr>
         </thead>
         <tbody id="todayOutboundTable">
-          <tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
+          <tr><td colspan="7" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
         </tbody>
       </table>
     </div>
@@ -120,6 +143,39 @@
     let currentPackage = null;
     let signaturePad = null;
     let isDrawing = false;
+    let isProxyMode = false;
+    let currentPermission = null;
+
+    function getUrlParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+
+    function toggleProxyMode() {
+      isProxyMode = document.getElementById('isProxyPickup').checked;
+      document.getElementById('proxyPickupInfo').style.display = isProxyMode ? 'block' : 'none';
+      document.getElementById('pickupPhoneGroup').style.display = isProxyMode ? 'block' : 'none';
+      document.getElementById('pickupNameGroup').style.display = isProxyMode ? 'block' : 'none';
+      hidePackageInfo();
+    }
+
+    function initFromUrlParams() {
+      const tracking = getUrlParam('tracking');
+      const proxy = getUrlParam('proxy');
+      const phone = getUrlParam('phone');
+
+      if (proxy === '1') {
+        document.getElementById('isProxyPickup').checked = true;
+        toggleProxyMode();
+        if (phone) {
+          document.getElementById('pickupPhone').value = phone;
+        }
+      }
+      if (tracking) {
+        document.getElementById('trackingNumber').value = tracking;
+        setTimeout(() => queryPackage(), 300);
+      }
+    }
 
     function initSignaturePad() {
       const canvas = document.getElementById('signaturePad');
@@ -221,25 +277,69 @@
         return;
       }
 
-      fetch(`/api/packages/tracking/${encodeURIComponent(trackingNumber)}`)
+      if (isProxyMode) {
+        const pickupPhone = document.getElementById('pickupPhone').value.trim();
+        if (!pickupPhone) {
+          alert('请输入代取人手机号');
+          return;
+        }
+        if (pickupPhone.length > 20) {
+          alert('代取人手机号长度不能超过20个字符');
+          return;
+        }
+
+        fetch('/api/packages/check-permission', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trackingNumber, pickupPhone })
+        })
         .then(res => res.json())
         .then(data => {
           if (data.success && data.data) {
-            showPackageInfo(data.data);
+            currentPermission = data.data;
+            if (data.data.allowed) {
+              fetch(`/api/packages/tracking/${encodeURIComponent(trackingNumber)}`)
+                .then(res => res.json())
+                .then(pkgData => {
+                  if (pkgData.success && pkgData.data) {
+                    showPackageInfo(pkgData.data);
+                  }
+                });
+            } else {
+              alert('该手机号无代取权限，请先绑定邻居关系');
+              hidePackageInfo();
+            }
           } else {
-            alert('未找到该快递，请检查运单号是否正确');
+            alert(data.error || '权限检查失败');
             hidePackageInfo();
           }
         })
         .catch(err => {
           console.error(err);
-          alert('查询失败，请检查网络');
+          alert('权限检查失败，请检查网络');
         });
+      } else {
+        fetch(`/api/packages/tracking/${encodeURIComponent(trackingNumber)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.data) {
+              currentPermission = null;
+              showPackageInfo(data.data);
+            } else {
+              alert('未找到该快递，请检查运单号是否正确');
+              hidePackageInfo();
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            alert('查询失败，请检查网络');
+          });
+      }
     }
 
     function showPackageInfo(pkg) {
       currentPackage = pkg;
-      
+
       document.getElementById('infoTracking').textContent = pkg.tracking_number;
       document.getElementById('infoPhone').textContent = pkg.recipient_phone;
       document.getElementById('infoName').textContent = pkg.recipient_name || '-';
@@ -250,26 +350,42 @@
       const statusAlert = document.getElementById('packageStatusAlert');
       const signatureContainer = document.getElementById('signatureContainer');
 
-      if (pkg.status === 'picked') {
-        statusAlert.className = 'alert alert-warning';
-        statusAlert.textContent = '⚠️ 该快递已取件';
-        signatureContainer.style.display = 'none';
+      let statusMessage = '';
+      let statusClass = 'alert-info';
+
+      if (isProxyMode && currentPermission && currentPermission.allowed) {
+        if (currentPermission.type === 'proxy') {
+          statusMessage = '✅ 代取权限验证通过，该邻居可以代取此快递';
+          statusClass = 'alert-success';
+        } else {
+          statusMessage = '✅ 验证通过（本人取件），请签字确认';
+          statusClass = 'alert-info';
+        }
+      } else if (pkg.status === 'picked') {
+        statusMessage = '⚠️ 该快递已取件';
+        statusClass = 'alert-warning';
       } else if (pkg.status === 'abnormal') {
-        statusAlert.className = 'alert alert-error';
-        statusAlert.textContent = '⚠️ 该快递为异常件，请确认后再出库';
-        signatureContainer.style.display = 'block';
+        statusMessage = '⚠️ 该快递为异常件，请确认后再出库';
+        statusClass = 'alert-error';
       } else if (pkg.status === 'overdue') {
-        statusAlert.className = 'alert alert-warning';
-        statusAlert.textContent = '⚠️ 该快递已逾期，请提醒收件人';
-        signatureContainer.style.display = 'block';
+        statusMessage = '⚠️ 该快递已逾期，请提醒收件人';
+        statusClass = 'alert-warning';
       } else {
-        statusAlert.className = 'alert alert-info';
-        statusAlert.textContent = '✅ 快递信息已确认，请收件人签字';
+        statusMessage = '✅ 快递信息已确认，请收件人签字';
+        statusClass = 'alert-info';
+      }
+
+      statusAlert.className = 'alert ' + statusClass;
+      statusAlert.textContent = statusMessage;
+
+      if (pkg.status === 'picked') {
+        signatureContainer.style.display = 'none';
+      } else {
         signatureContainer.style.display = 'block';
       }
 
       document.getElementById('packageInfo').style.display = 'block';
-      
+
       setTimeout(() => {
         if (!signaturePad) {
           initSignaturePad();
@@ -298,50 +414,89 @@
 
       const signatureData = getSignatureData();
 
-      fetch('/api/packages/scan-out', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          trackingNumber: currentPackage.tracking_number,
-          signature: signatureData
+      if (isProxyMode) {
+        const pickupPhone = document.getElementById('pickupPhone').value.trim();
+        const pickupName = document.getElementById('pickupName').value.trim();
+
+        fetch('/api/packages/scan-out-proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            trackingNumber: currentPackage.tracking_number,
+            pickupPhone,
+            pickupName,
+            signature: signatureData
+          })
         })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          showOutboundSuccess(data.data);
-          hidePackageInfo();
-          document.getElementById('trackingNumber').value = '';
-          document.getElementById('trackingNumber').focus();
-          loadTodayOutbound();
-        } else {
-          alert(data.error || '出库失败');
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        alert('出库失败，请重试');
-      });
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showOutboundSuccess(data.data.package, data.data);
+            hidePackageInfo();
+            document.getElementById('trackingNumber').value = '';
+            document.getElementById('trackingNumber').focus();
+            loadTodayOutbound();
+          } else {
+            alert(data.error || '出库失败');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('出库失败，请重试');
+        });
+      } else {
+        fetch('/api/packages/scan-out', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            trackingNumber: currentPackage.tracking_number,
+            signature: signatureData
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showOutboundSuccess(data.data);
+            hidePackageInfo();
+            document.getElementById('trackingNumber').value = '';
+            document.getElementById('trackingNumber').focus();
+            loadTodayOutbound();
+          } else {
+            alert(data.error || '出库失败');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('出库失败，请重试');
+        });
+      }
     }
 
-    function showOutboundSuccess(pkg) {
+    function showOutboundSuccess(pkg, resultData) {
       const resultDiv = document.getElementById('outboundResult');
       const hours = Math.floor((new Date(pkg.out_time) - new Date(pkg.in_time)) / (1000 * 60 * 60));
-      
+      const isProxy = resultData && resultData.pickupType === 'proxy';
+
       resultDiv.style.display = 'block';
       resultDiv.innerHTML = `
         <div style="width: 100%;">
           <div class="alert alert-success">
-            ✅ 出库成功！
+            ✅ ${isProxy ? '代取出库成功！已通知主取件人' : '出库成功！'}
           </div>
           <div class="result-item">
             <span class="result-label">运单号：</span>
             <span class="result-value">${pkg.tracking_number}</span>
           </div>
           <div class="result-item">
-            <span class="result-label">手机号：</span>
+            <span class="result-label">收件人手机号：</span>
             <span class="result-value">${pkg.recipient_phone}</span>
           </div>
+          ${isProxy ? `
+          <div class="result-item">
+            <span class="result-label">代取人：</span>
+            <span class="result-value">${pkg.proxy_pickup_name || pkg.proxy_pickup_phone} (${pkg.proxy_pickup_phone})</span>
+          </div>
+          ` : ''}
           <div class="result-item">
             <span class="result-label">货架位：</span>
             <span class="result-value">${pkg.shelf_code || '-'}</span>
@@ -372,18 +527,25 @@
         .then(data => {
           const tbody = document.getElementById('todayOutboundTable');
           if (data.success && data.data.length > 0) {
-            tbody.innerHTML = data.data.map(pkg => `
+            tbody.innerHTML = data.data.map(pkg => {
+              const isProxy = pkg.is_proxy_pickup === 1 || pkg.is_proxy_pickup === true;
+              const pickupTypeBadge = isProxy
+                ? '<span class="badge badge-proxy">👥 代取</span>'
+                : '<span class="badge badge-self">本人</span>';
+              return `
               <tr>
                 <td>${pkg.tracking_number}</td>
                 <td>${pkg.recipient_phone}</td>
+                <td>${pickupTypeBadge}</td>
                 <td>${pkg.shelf_code || '-'}</td>
                 <td>${formatTime(pkg.in_time)}</td>
                 <td>${formatTime(pkg.out_time)}</td>
                 <td>${pkg.signature ? '<span style="color: #27ae60;">✓ 已签字</span>' : '-'}</td>
               </tr>
-            `).join('');
+            `;
+            }).join('');
           } else {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">暂无出库记录</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999; padding: 20px;">暂无出库记录</td></tr>';
           }
         })
         .catch(err => {
@@ -415,6 +577,7 @@
       }
     });
 
+    initFromUrlParams();
     loadTodayOutbound();
   </script>
 </body>

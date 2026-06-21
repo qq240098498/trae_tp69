@@ -11,6 +11,7 @@ let db = {
   returnOrders: [],
   shelfActivity: [],
   bigItemWarnings: [],
+  neighborRelations: [],
   config: {},
   nextIds: {
     shelves: 1,
@@ -18,7 +19,8 @@ let db = {
     notifications: 1,
     returnOrders: 1,
     shelfActivity: 1,
-    bigItemWarnings: 1
+    bigItemWarnings: 1,
+    neighborRelations: 1
   }
 };
 
@@ -37,6 +39,7 @@ function loadDb() {
   if (!db.returnOrders) db.returnOrders = [];
   if (!db.shelfActivity) db.shelfActivity = [];
   if (!db.bigItemWarnings) db.bigItemWarnings = [];
+  if (!db.neighborRelations) db.neighborRelations = [];
   if (!db.config) db.config = {};
   if (!db.nextIds) db.nextIds = {};
   if (typeof db.nextIds.shelves !== 'number') db.nextIds.shelves = 1;
@@ -45,6 +48,7 @@ function loadDb() {
   if (typeof db.nextIds.returnOrders !== 'number') db.nextIds.returnOrders = 1;
   if (typeof db.nextIds.shelfActivity !== 'number') db.nextIds.shelfActivity = 1;
   if (typeof db.nextIds.bigItemWarnings !== 'number') db.nextIds.bigItemWarnings = 1;
+  if (typeof db.nextIds.neighborRelations !== 'number') db.nextIds.neighborRelations = 1;
   
   initDefaultConfig();
 }
@@ -866,6 +870,160 @@ function findOptimalEmptyShelf(isBigItem = false) {
     .sort((a, b) => b.score - a.score)[0].shelf;
 }
 
+function createNeighborRelation(data) {
+  const { ownerPhone, neighborPhone, neighborName, relationType, address, floor } = data;
+
+  const existing = db.neighborRelations.find(r =>
+    r.owner_phone === ownerPhone &&
+    r.neighbor_phone === neighborPhone &&
+    r.status !== 'rejected'
+  );
+  if (existing) {
+    throw new Error('已存在该邻居绑定关系或申请');
+  }
+
+  const relation = {
+    id: db.nextIds.neighborRelations++,
+    owner_phone: ownerPhone,
+    neighbor_phone: neighborPhone,
+    neighbor_name: neighborName || '',
+    relation_type: relationType || 'same_floor',
+    address: address || '',
+    floor: floor || '',
+    status: 'pending',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  db.neighborRelations.push(relation);
+  saveDb();
+  return getNeighborRelationById(relation.id);
+}
+
+function getNeighborRelationById(id) {
+  return db.neighborRelations.find(r => r.id === parseInt(id)) || null;
+}
+
+function getNeighborRelationsByPhone(phone) {
+  return db.neighborRelations
+    .filter(r => r.owner_phone === phone || r.neighbor_phone === phone)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+function getApprovedNeighbors(ownerPhone) {
+  return db.neighborRelations.filter(r =>
+    r.owner_phone === ownerPhone && r.status === 'approved'
+  );
+}
+
+function getApprovedOwners(neighborPhone) {
+  return db.neighborRelations.filter(r =>
+    r.neighbor_phone === neighborPhone && r.status === 'approved'
+  );
+}
+
+function approveNeighborRelation(id) {
+  const relation = getNeighborRelationById(id);
+  if (!relation) throw new Error('绑定申请不存在');
+  if (relation.status !== 'pending') throw new Error('该申请状态不可审批');
+
+  relation.status = 'approved';
+  relation.updated_at = new Date().toISOString();
+  saveDb();
+  return getNeighborRelationById(id);
+}
+
+function rejectNeighborRelation(id) {
+  const relation = getNeighborRelationById(id);
+  if (!relation) throw new Error('绑定申请不存在');
+  if (relation.status !== 'pending') throw new Error('该申请状态不可审批');
+
+  relation.status = 'rejected';
+  relation.updated_at = new Date().toISOString();
+  saveDb();
+  return getNeighborRelationById(id);
+}
+
+function removeNeighborRelation(id) {
+  const idx = db.neighborRelations.findIndex(r => r.id === parseInt(id));
+  if (idx === -1) return { changes: 0 };
+  db.neighborRelations.splice(idx, 1);
+  saveDb();
+  return { changes: 1 };
+}
+
+function checkPickupPermission(trackingNumber, pickupPhone) {
+  const pkg = getPackageByTracking(trackingNumber);
+  if (!pkg) throw new Error('快递不存在');
+
+  if (pkg.recipient_phone === pickupPhone) {
+    return { allowed: true, type: 'self', relation: null };
+  }
+
+  const approvedOwners = getApprovedOwners(pickupPhone);
+  const matchingRelation = approvedOwners.find(r => r.owner_phone === pkg.recipient_phone);
+
+  if (matchingRelation) {
+    return { allowed: true, type: 'proxy', relation: matchingRelation };
+  }
+
+  return { allowed: false, type: 'none', relation: null };
+}
+
+function proxyPickupPackage(trackingNumber, pickupPhone, pickupName, signature) {
+  const permission = checkPickupPermission(trackingNumber, pickupPhone);
+  if (!permission.allowed) {
+    throw new Error('该手机号无代取权限，请先绑定邻居关系');
+  }
+
+  const pkg = getPackageByTracking(trackingNumber);
+  if (!pkg) {
+    throw new Error('快递不存在');
+  }
+  if (pkg.status !== 'in_stock' && pkg.status !== 'overdue' && pkg.status !== 'abnormal') {
+    throw new Error('快递状态异常，无法出库');
+  }
+
+  pkg.status = 'picked';
+  pkg.out_time = new Date().toISOString();
+  pkg.signature = signature || '';
+  pkg.is_proxy_pickup = 1;
+  pkg.proxy_pickup_phone = pickupPhone;
+  pkg.proxy_pickup_name = pickupName || '';
+
+  if (pkg.shelf_id) {
+    const shelf = db.shelves.find(s => s.id === pkg.shelf_id);
+    if (shelf) {
+      shelf.is_occupied = 0;
+      shelf.current_package_id = null;
+      recordShelfActivity(pkg.shelf_id, 'out');
+    }
+  }
+
+  saveDb();
+  return {
+    package: getPackageById(pkg.id),
+    pickupType: permission.type,
+    relation: permission.relation
+  };
+}
+
+function getNeighborStats(phone) {
+  const relations = getNeighborRelationsByPhone(phone);
+  const pending = relations.filter(r => r.status === 'pending' && r.neighbor_phone === phone).length;
+  const approved = relations.filter(r => r.status === 'approved').length;
+  const myNeighbors = relations.filter(r => r.owner_phone === phone && r.status === 'approved').length;
+  const canPickupFor = relations.filter(r => r.neighbor_phone === phone && r.status === 'approved').length;
+
+  return {
+    total: relations.length,
+    pending,
+    approved,
+    myNeighbors,
+    canPickupFor
+  };
+}
+
 module.exports = {
   initDatabase,
   findNearestEmptyShelf,
@@ -904,4 +1062,15 @@ module.exports = {
   getConfig,
   updateConfig,
   resetConfig,
+  createNeighborRelation,
+  getNeighborRelationById,
+  getNeighborRelationsByPhone,
+  getApprovedNeighbors,
+  getApprovedOwners,
+  approveNeighborRelation,
+  rejectNeighborRelation,
+  removeNeighborRelation,
+  checkPickupPermission,
+  proxyPickupPackage,
+  getNeighborStats,
 };

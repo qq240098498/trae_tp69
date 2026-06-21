@@ -41,6 +41,17 @@ const {
   getConfig,
   updateConfig,
   resetConfig,
+  createNeighborRelation,
+  getNeighborRelationById,
+  getNeighborRelationsByPhone,
+  getApprovedNeighbors,
+  getApprovedOwners,
+  approveNeighborRelation,
+  rejectNeighborRelation,
+  removeNeighborRelation,
+  checkPickupPermission,
+  proxyPickupPackage,
+  getNeighborStats,
 } = require('./db');
 
 const dataDir = path.join(__dirname, 'data');
@@ -722,6 +733,217 @@ cron.schedule('0 * * * *', () => {
 setTimeout(() => {
   processOverduePackages();
 }, 3000);
+
+const MAX_NEIGHBOR_NAME_LENGTH = 50;
+const MAX_ADDRESS_LENGTH = 100;
+const MAX_FLOOR_LENGTH = 20;
+const VALID_RELATION_TYPES = ['same_address', 'same_floor', 'same_building', 'other'];
+
+function validateNeighborPhone(phone) {
+  if (!phone || typeof phone !== 'string') {
+    return '手机号不能为空';
+  }
+  if (phone.trim().length === 0) {
+    return '手机号不能为空';
+  }
+  if (phone.length > MAX_PHONE_LENGTH) {
+    return `手机号长度不能超过 ${MAX_PHONE_LENGTH} 个字符`;
+  }
+  return null;
+}
+
+app.post('/api/neighbors/bind', (req, res) => {
+  try {
+    let { ownerPhone, neighborPhone, neighborName, relationType, address, floor } = req.body;
+
+    ownerPhone = ownerPhone ? ownerPhone.trim() : '';
+    neighborPhone = neighborPhone ? neighborPhone.trim() : '';
+    neighborName = neighborName ? neighborName.trim() : '';
+    relationType = relationType || 'same_floor';
+    address = address ? address.trim() : '';
+    floor = floor ? floor.trim() : '';
+
+    const ownerPhoneError = validateNeighborPhone(ownerPhone);
+    if (ownerPhoneError) {
+      return res.status(400).json({ success: false, error: '主取件人' + ownerPhoneError });
+    }
+
+    const neighborPhoneError = validateNeighborPhone(neighborPhone);
+    if (neighborPhoneError) {
+      return res.status(400).json({ success: false, error: '邻居手机号' + neighborPhoneError });
+    }
+
+    if (ownerPhone === neighborPhone) {
+      return res.status(400).json({ success: false, error: '不能绑定自己为邻居' });
+    }
+
+    if (neighborName && neighborName.length > MAX_NEIGHBOR_NAME_LENGTH) {
+      return res.status(400).json({ success: false, error: `邻居姓名长度不能超过 ${MAX_NEIGHBOR_NAME_LENGTH} 个字符` });
+    }
+
+    if (!VALID_RELATION_TYPES.includes(relationType)) {
+      return res.status(400).json({ success: false, error: '无效的关系类型' });
+    }
+
+    if (address && address.length > MAX_ADDRESS_LENGTH) {
+      return res.status(400).json({ success: false, error: `地址长度不能超过 ${MAX_ADDRESS_LENGTH} 个字符` });
+    }
+
+    if (floor && floor.length > MAX_FLOOR_LENGTH) {
+      return res.status(400).json({ success: false, error: `楼层长度不能超过 ${MAX_FLOOR_LENGTH} 个字符` });
+    }
+
+    const relation = createNeighborRelation({
+      ownerPhone,
+      neighborPhone,
+      neighborName,
+      relationType,
+      address,
+      floor
+    });
+
+    res.json({
+      success: true,
+      data: relation,
+      message: '绑定申请已提交，请等待对方确认'
+    });
+  } catch (error) {
+    console.error('邻居绑定失败:', error);
+    res.status(500).json({ success: false, error: error.message || '绑定失败' });
+  }
+});
+
+app.get('/api/neighbors/:phone', (req, res) => {
+  try {
+    const { phone } = req.params;
+    const relations = getNeighborRelationsByPhone(phone);
+    res.json({ success: true, data: relations });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/neighbors/stats/:phone', (req, res) => {
+  try {
+    const { phone } = req.params;
+    const stats = getNeighborStats(phone);
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.put('/api/neighbors/:id/approve', (req, res) => {
+  try {
+    const relation = approveNeighborRelation(req.params.id);
+    res.json({
+      success: true,
+      data: relation,
+      message: '已批准邻居绑定'
+    });
+  } catch (error) {
+    console.error('批准邻居绑定失败:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.put('/api/neighbors/:id/reject', (req, res) => {
+  try {
+    const relation = rejectNeighborRelation(req.params.id);
+    res.json({
+      success: true,
+      data: relation,
+      message: '已拒绝邻居绑定'
+    });
+  } catch (error) {
+    console.error('拒绝邻居绑定失败:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.delete('/api/neighbors/:id', (req, res) => {
+  try {
+    const result = removeNeighborRelation(req.params.id);
+    if (result.changes === 0) {
+      return res.status(404).json({ success: false, error: '绑定关系不存在' });
+    }
+    res.json({ success: true, message: '已解除邻居绑定' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/packages/check-permission', (req, res) => {
+  try {
+    let { trackingNumber, pickupPhone } = req.body;
+    trackingNumber = trackingNumber ? trackingNumber.trim() : '';
+    pickupPhone = pickupPhone ? pickupPhone.trim() : '';
+
+    const trackingError = validateTrackingNumber(trackingNumber);
+    if (trackingError) {
+      return res.status(400).json({ success: false, error: trackingError });
+    }
+
+    const phoneError = validatePhone(pickupPhone);
+    if (phoneError) {
+      return res.status(400).json({ success: false, error: phoneError });
+    }
+
+    const permission = checkPickupPermission(trackingNumber, pickupPhone);
+    res.json({ success: true, data: permission });
+  } catch (error) {
+    console.error('权限检查失败:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/packages/scan-out-proxy', (req, res) => {
+  try {
+    let { trackingNumber, pickupPhone, pickupName, signature } = req.body;
+    trackingNumber = trackingNumber ? trackingNumber.trim() : '';
+    pickupPhone = pickupPhone ? pickupPhone.trim() : '';
+    pickupName = pickupName ? pickupName.trim() : '';
+
+    const trackingError = validateTrackingNumber(trackingNumber);
+    if (trackingError) {
+      return res.status(400).json({ success: false, error: trackingError });
+    }
+
+    const phoneError = validatePhone(pickupPhone);
+    if (phoneError) {
+      return res.status(400).json({ success: false, error: phoneError });
+    }
+
+    if (pickupName && pickupName.length > MAX_NAME_LENGTH) {
+      return res.status(400).json({ success: false, error: `取件人姓名长度不能超过 ${MAX_NAME_LENGTH} 个字符` });
+    }
+
+    const result = proxyPickupPackage(trackingNumber, pickupPhone, pickupName, signature || '');
+
+    if (result.pickupType === 'proxy') {
+      const notifyContent = `【快递代收点】您的快递（运单号：${trackingNumber}）已由邻居 ${pickupName || pickupPhone} 代取，请及时查收。`;
+      sendSmsNotification(result.package.recipient_phone, notifyContent);
+      sendAppPush(result.package.recipient_phone, notifyContent);
+
+      createNotification({
+        packageId: result.package.id,
+        trackingNumber: result.package.tracking_number,
+        recipientPhone: result.package.recipient_phone,
+        type: 'proxy_pickup',
+        content: notifyContent,
+      });
+    }
+
+    res.json({
+      success: true,
+      data: result,
+      message: result.pickupType === 'proxy' ? '代取出库成功，已通知主取件人' : '出库成功'
+    });
+  } catch (error) {
+    console.error('代取出库失败:', error);
+    res.status(500).json({ success: false, error: error.message || '出库失败' });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`快递代收点管理系统已启动: http://localhost:${PORT}`);

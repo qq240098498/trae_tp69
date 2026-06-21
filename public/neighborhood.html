@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>邻里代取 - 快递代收点管理系统</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">📦 快递<span>代收点</span></div>
+    <nav>
+      <a href="/">🏠 入库扫描</a>
+      <a href="/outbound.html">📤 出库核销</a>
+      <a href="/overdue.html">⏰ 滞留件管理</a>
+      <a href="/shelves.html">🗄️ 货架状态</a>
+      <a href="/notifications.html">📱 通知记录</a>
+      <a href="/reconcile.html">🔄 退货对账</a>
+      <a href="/neighborhood.html" class="active">👥 邻里代取</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>邻里代取</h1>
+      <p>同地址/同楼层邻居可绑定代取权限，代取时自动关联主取件人，避免错拿</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card neighbors-approved">
+        <div class="stat-label">我的邻居</div>
+        <div class="stat-value" id="myNeighbors">0</div>
+      </div>
+      <div class="stat-card neighbors-canpickup">
+        <div class="stat-label">我可代取</div>
+        <div class="stat-value" id="canPickupFor">0</div>
+      </div>
+      <div class="stat-card neighbors-pending">
+        <div class="stat-label">待审批</div>
+        <div class="stat-value" id="pendingCount">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="form-group">
+        <label for="currentPhone">我的手机号</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="tel" id="currentPhone" placeholder="输入您的手机号查看邻里代取信息" maxlength="20">
+          <button class="btn btn-primary" onclick="loadNeighborData()">查询</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="neighborContent" style="display: none;">
+      <div class="tabs">
+        <div class="tab active" data-tab="my-neighbors" onclick="switchTab('my-neighbors')">
+          👥 我的邻居
+        </div>
+        <div class="tab" data-tab="bind-request" onclick="switchTab('bind-request')">
+          📩 申请绑定
+        </div>
+        <div class="tab" data-tab="pending" onclick="switchTab('pending')">
+          ⏳ 待我审批 <span class="badge badge-pending" id="pendingBadge" style="display: none;">0</span>
+        </div>
+        <div class="tab" data-tab="can-pickup" onclick="switchTab('can-pickup')">
+          📦 我可代取
+        </div>
+      </div>
+
+      <div class="tabs-content active" id="tab-my-neighbors">
+        <h2 style="margin-bottom: 15px;">👥 已绑定的邻居</h2>
+        <div id="myNeighborsList">
+          <div class="empty-state">
+            <div style="font-size: 48px; margin-bottom: 10px;">👥</div>
+            <p>暂无绑定的邻居，去申请绑定吧</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs-content" id="tab-bind-request">
+        <h2 style="margin-bottom: 15px;">📩 申请绑定邻居</h2>
+        <form id="bindForm" style="max-width: 500px;">
+          <div class="form-group">
+            <label for="ownerPhone">对方手机号 *</label>
+            <input type="tel" id="ownerPhone" name="ownerPhone" placeholder="输入邻居的手机号" maxlength="20">
+          </div>
+          <div class="form-group">
+            <label for="neighborName">我的姓名（选填）</label>
+            <input type="text" id="neighborName" name="neighborName" placeholder="让对方知道您是谁" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label for="relationType">关系类型 *</label>
+            <select id="relationType" name="relationType">
+              <option value="same_floor">同楼层邻居</option>
+              <option value="same_building">同栋楼邻居</option>
+              <option value="same_address">同地址/同住户</option>
+              <option value="other">其他关系</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="address">地址（选填）</label>
+            <input type="text" id="address" name="address" placeholder="如：阳光小区3号楼" maxlength="100">
+          </div>
+          <div class="form-group">
+            <label for="floor">楼层（选填）</label>
+            <input type="text" id="floor" name="floor" placeholder="如：15层" maxlength="20">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            📤 提交绑定申请
+          </button>
+        </form>
+      </div>
+
+      <div class="tabs-content" id="tab-pending">
+        <h2 style="margin-bottom: 15px;">⏳ 待我审批的申请</h2>
+        <div id="pendingList">
+          <div class="empty-state">
+            <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+            <p>暂无待审批的申请</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs-content" id="tab-can-pickup">
+        <h2 style="margin-bottom: 15px;">📦 我可以代取的快递</h2>
+        <p style="color: #7f8c8d; margin-bottom: 15px;">以下是您已绑定邻居的在库快递，您可以帮忙代取</p>
+        <button class="btn btn-secondary" onclick="loadPickupablePackages()" style="margin-bottom: 15px;">
+          🔄 刷新可代取列表
+        </button>
+        <div id="pickupableList">
+          <table>
+            <thead>
+              <tr>
+                <th>运单号</th>
+                <th>归属人</th>
+                <th>货架位</th>
+                <th>入库时间</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="pickupableTableBody">
+              <tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentPhone = '';
+    let currentTab = 'my-neighbors';
+
+    function switchTab(tabName) {
+      currentTab = tabName;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tabs-content').forEach(c => c.classList.remove('active'));
+      document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+
+      if (tabName === 'can-pickup') {
+        loadPickupablePackages();
+      }
+    }
+
+    function loadNeighborData() {
+      const phone = document.getElementById('currentPhone').value.trim();
+      if (!phone) {
+        alert('请输入手机号');
+        return;
+      }
+      if (phone.length > 20) {
+        alert('手机号长度不能超过20个字符');
+        return;
+      }
+
+      currentPhone = phone;
+      document.getElementById('neighborContent').style.display = 'block';
+
+      loadStats();
+      loadMyNeighbors();
+      loadPendingRequests();
+    }
+
+    function loadStats() {
+      fetch(`/api/neighbors/stats/${encodeURIComponent(currentPhone)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('myNeighbors').textContent = data.data.myNeighbors;
+            document.getElementById('canPickupFor').textContent = data.data.canPickupFor;
+            document.getElementById('pendingCount').textContent = data.data.pending;
+
+            const badge = document.getElementById('pendingBadge');
+            if (data.data.pending > 0) {
+              badge.style.display = 'inline-block';
+              badge.textContent = data.data.pending;
+            } else {
+              badge.style.display = 'none';
+            }
+          }
+        })
+        .catch(err => console.error('加载统计失败:', err));
+    }
+
+    function loadMyNeighbors() {
+      fetch(`/api/neighbors/${encodeURIComponent(currentPhone)}`)
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('myNeighborsList');
+          if (data.success && data.data.length > 0) {
+            const myApprovedNeighbors = data.data.filter(r =>
+              r.owner_phone === currentPhone && r.status === 'approved'
+            );
+
+            if (myApprovedNeighbors.length > 0) {
+              container.innerHTML = myApprovedNeighbors.map(r => `
+                <div class="neighbor-card">
+                  <div class="neighbor-info">
+                    <div class="neighbor-avatar">👤</div>
+                    <div>
+                      <div class="neighbor-name">${r.neighbor_name || '未命名邻居'}</div>
+                      <div class="neighbor-phone">${r.neighbor_phone}</div>
+                      <div class="neighbor-relation">${getRelationText(r.relation_type)} ${r.address ? '· ' + r.address : ''} ${r.floor ? '· ' + r.floor + '层' : ''}</div>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <span class="badge badge-approved">已绑定</span>
+                    <button class="btn btn-danger btn-sm" onclick="removeRelation(${r.id})">解除绑定</button>
+                  </div>
+                </div>
+              `).join('');
+            } else {
+              container.innerHTML = `
+                <div class="empty-state">
+                  <div style="font-size: 48px; margin-bottom: 10px;">👥</div>
+                  <p>暂无绑定的邻居，去申请绑定吧</p>
+                </div>
+              `;
+            }
+          } else {
+            container.innerHTML = `
+              <div class="empty-state">
+                <div style="font-size: 48px; margin-bottom: 10px;">👥</div>
+                <p>暂无绑定的邻居，去申请绑定吧</p>
+              </div>
+            `;
+          }
+        })
+        .catch(err => {
+          console.error(err);
+        });
+    }
+
+    function loadPendingRequests() {
+      fetch(`/api/neighbors/${encodeURIComponent(currentPhone)}`)
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('pendingList');
+          if (data.success && data.data.length > 0) {
+            const pending = data.data.filter(r =>
+              r.neighbor_phone === currentPhone && r.status === 'pending'
+            );
+
+            if (pending.length > 0) {
+              container.innerHTML = pending.map(r => `
+                <div class="neighbor-card">
+                  <div class="neighbor-info">
+                    <div class="neighbor-avatar">📩</div>
+                    <div>
+                      <div class="neighbor-name">${r.owner_phone}</div>
+                      <div class="neighbor-relation">${getRelationText(r.relation_type)} 申请绑定您的代取权限</div>
+                      <div class="neighbor-time">申请时间：${formatTime(r.created_at)}</div>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-success btn-sm" onclick="approveRelation(${r.id})">同意</button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectRelation(${r.id})">拒绝</button>
+                  </div>
+                </div>
+              `).join('');
+            } else {
+              container.innerHTML = `
+                <div class="empty-state">
+                  <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+                  <p>暂无待审批的申请</p>
+                </div>
+              `;
+            }
+          } else {
+            container.innerHTML = `
+              <div class="empty-state">
+                <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+                <p>暂无待审批的申请</p>
+              </div>
+            `;
+          }
+        })
+        .catch(err => {
+          console.error(err);
+        });
+    }
+
+    function loadPickupablePackages() {
+      if (!currentPhone) return;
+
+      const tbody = document.getElementById('pickupableTableBody');
+
+      fetch(`/api/neighbors/${encodeURIComponent(currentPhone)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success || data.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">您还没有绑定任何邻居</td></tr>';
+            return;
+          }
+
+          const approvedOwners = data.data.filter(r =>
+            r.neighbor_phone === currentPhone && r.status === 'approved'
+          );
+
+          if (approvedOwners.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">您还没有可代取的邻居</td></tr>';
+            return;
+          }
+
+          const ownerPhones = approvedOwners.map(r => r.owner_phone);
+          const allPackages = [];
+
+          Promise.all(ownerPhones.map(phone =>
+            fetch(`/api/packages?status=in_stock&limit=50`)
+              .then(res => res.json())
+              .then(d => {
+                if (d.success) {
+                  const ownersPkgs = d.data.filter(p => p.recipient_phone === phone);
+                  const ownerInfo = approvedOwners.find(r => r.owner_phone === phone);
+                  ownersPkgs.forEach(pkg => {
+                    pkg.owner_name = ownerInfo.owner_phone;
+                    pkg.relation_type = ownerInfo.relation_type;
+                  });
+                  allPackages.push(...ownersPkgs);
+                }
+              })
+          )).then(() => {
+            if (allPackages.length > 0) {
+              tbody.innerHTML = allPackages.map(pkg => `
+                <tr>
+                  <td>${pkg.tracking_number}</td>
+                  <td>${maskPhone(pkg.recipient_phone)}</td>
+                  <td>${pkg.shelf_code || '-'}</td>
+                  <td>${formatTime(pkg.in_time)}</td>
+                  <td>${getStatusBadge(pkg.status)}</td>
+                  <td>
+                    <button class="btn btn-primary btn-sm" onclick="quickPickup('${pkg.tracking_number}')">
+                      代取
+                    </button>
+                  </td>
+                </tr>
+              `).join('');
+            } else {
+              tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">暂无待取快递</td></tr>';
+            }
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">加载失败</td></tr>';
+        });
+    }
+
+    function quickPickup(trackingNumber) {
+      if (!confirm(`确定要代取快递 ${trackingNumber} 吗？`)) {
+        return;
+      }
+      window.location.href = `/outbound.html?tracking=${encodeURIComponent(trackingNumber)}&proxy=1&phone=${encodeURIComponent(currentPhone)}`;
+    }
+
+    function getRelationText(type) {
+      const map = {
+        'same_address': '同地址',
+        'same_floor': '同楼层',
+        'same_building': '同栋楼',
+        'other': '其他'
+      };
+      return map[type] || type;
+    }
+
+    function getStatusBadge(status) {
+      const statusMap = {
+        'in_stock': { text: '在库', class: 'badge-in-stock' },
+        'picked': { text: '已取件', class: 'badge-picked' },
+        'overdue': { text: '逾期', class: 'badge-overdue' },
+        'abnormal': { text: '异常', class: 'badge-abnormal' }
+      };
+      const s = statusMap[status] || { text: status, class: '' };
+      return `<span class="badge ${s.class}">${s.text}</span>`;
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return '-';
+      const d = new Date(timeStr);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    function maskPhone(phone) {
+      if (!phone || phone.length < 7) return phone;
+      return phone.substr(0, 3) + '****' + phone.substr(-4);
+    }
+
+    document.getElementById('bindForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const ownerPhone = document.getElementById('ownerPhone').value.trim();
+      const neighborName = document.getElementById('neighborName').value.trim();
+      const relationType = document.getElementById('relationType').value;
+      const address = document.getElementById('address').value.trim();
+      const floor = document.getElementById('floor').value.trim();
+
+      if (!ownerPhone) {
+        alert('请输入对方手机号');
+        return;
+      }
+      if (ownerPhone === currentPhone) {
+        alert('不能绑定自己');
+        return;
+      }
+
+      fetch('/api/neighbors/bind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ownerPhone,
+          neighborPhone: currentPhone,
+          neighborName,
+          relationType,
+          address,
+          floor
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('绑定申请已提交，请等待对方确认');
+          document.getElementById('bindForm').reset();
+          loadStats();
+          switchTab('pending');
+          loadPendingRequests();
+        } else {
+          alert(data.error || '提交失败');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('提交失败，请重试');
+      });
+    });
+
+    function approveRelation(id) {
+      if (!confirm('确定同意该邻居绑定申请吗？同意后对方将可以代取您的快递。')) {
+        return;
+      }
+
+      fetch(`/api/neighbors/${id}/approve`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('已同意绑定');
+          loadStats();
+          loadMyNeighbors();
+          loadPendingRequests();
+        } else {
+          alert(data.error || '操作失败');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('操作失败，请重试');
+      });
+    }
+
+    function rejectRelation(id) {
+      if (!confirm('确定拒绝该邻居绑定申请吗？')) {
+        return;
+      }
+
+      fetch(`/api/neighbors/${id}/reject`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('已拒绝绑定');
+          loadStats();
+          loadPendingRequests();
+        } else {
+          alert(data.error || '操作失败');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('操作失败，请重试');
+      });
+    }
+
+    function removeRelation(id) {
+      if (!confirm('确定解除该邻居绑定吗？解除后对方将无法代取您的快递。')) {
+        return;
+      }
+
+      fetch(`/api/neighbors/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('已解除绑定');
+          loadStats();
+          loadMyNeighbors();
+        } else {
+          alert(data.error || '操作失败');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('操作失败，请重试');
+      });
+    }
+
+    document.getElementById('currentPhone').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        loadNeighborData();
+      }
+    });
+  </script>
+</body>
+</html>
