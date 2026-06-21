@@ -60,6 +60,62 @@
           </button>
         </form>
 
+        <div id="quickBindPanel" style="display: none; margin-top: 20px; padding: 15px; background: #fdf2e9; border-radius: 8px; border-left: 3px solid #e67e22;">
+          <h3 style="font-size: 15px; color: #d35400; margin-bottom: 12px;">🔗 暂无代取权限？快捷绑定</h3>
+          <p id="quickBindDesc" style="font-size: 13px; color: #7f8c8d; margin-bottom: 12px;">
+            快速绑定邻居关系，绑定后即可代取此快递
+          </p>
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <button type="button" class="btn btn-sm btn-warning" id="btnBindModeApply" onclick="switchBindMode('apply')" style="flex: 1; font-size: 12px; padding: 6px 8px;">
+              📩 申请绑定
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" id="btnBindModeInstant" onclick="switchBindMode('instant')" style="flex: 1; font-size: 12px; padding: 6px 8px;">
+              ✅ 立即生效
+            </button>
+          </div>
+          <div id="applyBindSection">
+            <p style="font-size: 12px; color: #e67e22; margin-bottom: 10px;">
+              ⏳ 提交绑定申请，等待主取件人批准后可代取
+            </p>
+          </div>
+          <div id="instantBindSection" style="display: none;">
+            <p style="font-size: 12px; color: #27ae60; margin-bottom: 10px;">
+              ✅ 主取件人在场确认，绑定后立即生效
+            </p>
+            <div class="form-group">
+              <label for="quickBindOwnerPhone">主取件人手机号 *</label>
+              <input type="tel" id="quickBindOwnerPhone" name="quickBindOwnerPhone" placeholder="主取件人输入手机号确认" maxlength="20">
+            </div>
+          </div>
+          <form id="quickBindForm">
+            <div class="form-group">
+              <label for="quickBindRelationType">关系类型 *</label>
+              <select id="quickBindRelationType" name="quickBindRelationType">
+                <option value="same_floor">同楼层邻居</option>
+                <option value="same_building">同栋楼邻居</option>
+                <option value="same_address">同地址/同住户</option>
+                <option value="other">其他关系</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="quickBindAddress">地址（选填）</label>
+              <input type="text" id="quickBindAddress" name="quickBindAddress" placeholder="如：阳光小区3号楼" maxlength="100">
+            </div>
+            <div class="form-group">
+              <label for="quickBindFloor">楼层（选填）</label>
+              <input type="text" id="quickBindFloor" name="quickBindFloor" placeholder="如：15层" maxlength="20">
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" class="btn btn-secondary" onclick="hideQuickBind()" style="flex: 1;">
+                取消
+              </button>
+              <button type="button" class="btn btn-warning" onclick="quickBindNeighbor()" style="flex: 2;" id="btnQuickBindSubmit">
+                🔗 提交绑定申请
+              </button>
+            </div>
+          </form>
+        </div>
+
         <div id="packageInfo" style="margin-top: 20px; display: none;">
           <div class="alert alert-info" id="packageStatusAlert">
             快递信息已加载，请确认后签收
@@ -145,6 +201,9 @@
     let isDrawing = false;
     let isProxyMode = false;
     let currentPermission = null;
+    let currentQuickBindTracking = null;
+    let currentQuickBindPhone = null;
+    let currentBindMode = 'apply';
 
     function getUrlParam(name) {
       const params = new URLSearchParams(window.location.search);
@@ -156,7 +215,37 @@
       document.getElementById('proxyPickupInfo').style.display = isProxyMode ? 'block' : 'none';
       document.getElementById('pickupPhoneGroup').style.display = isProxyMode ? 'block' : 'none';
       document.getElementById('pickupNameGroup').style.display = isProxyMode ? 'block' : 'none';
+      hideQuickBind();
       hidePackageInfo();
+    }
+
+    function maskPhone(phone) {
+      if (!phone || phone.length < 7) return phone;
+      return phone.substr(0, 3) + '****' + phone.substr(-4);
+    }
+
+    function switchBindMode(mode) {
+      currentBindMode = mode;
+      const btnApply = document.getElementById('btnBindModeApply');
+      const btnInstant = document.getElementById('btnBindModeInstant');
+      const applySection = document.getElementById('applyBindSection');
+      const instantSection = document.getElementById('instantBindSection');
+      const submitBtn = document.getElementById('btnQuickBindSubmit');
+
+      if (mode === 'apply') {
+        btnApply.className = 'btn btn-sm btn-warning';
+        btnInstant.className = 'btn btn-sm btn-secondary';
+        applySection.style.display = 'block';
+        instantSection.style.display = 'none';
+        submitBtn.textContent = '🔗 提交绑定申请';
+      } else {
+        btnApply.className = 'btn btn-sm btn-secondary';
+        btnInstant.className = 'btn btn-sm btn-success';
+        applySection.style.display = 'none';
+        instantSection.style.display = 'block';
+        submitBtn.textContent = '✅ 立即绑定并代取';
+        submitBtn.className = 'btn btn-success';
+      }
     }
 
     function initFromUrlParams() {
@@ -277,6 +366,8 @@
         return;
       }
 
+      hideQuickBind();
+
       if (isProxyMode) {
         const pickupPhone = document.getElementById('pickupPhone').value.trim();
         if (!pickupPhone) {
@@ -306,7 +397,7 @@
                   }
                 });
             } else {
-              alert('该手机号无代取权限，请先绑定邻居关系');
+              showQuickBind(trackingNumber, pickupPhone);
               hidePackageInfo();
             }
           } else {
@@ -335,6 +426,120 @@
             alert('查询失败，请检查网络');
           });
       }
+    }
+
+    function showQuickBind(trackingNumber, pickupPhone) {
+      currentQuickBindTracking = trackingNumber;
+      currentQuickBindPhone = pickupPhone;
+      document.getElementById('quickBindPanel').style.display = 'block';
+
+      fetch(`/api/packages/tracking/${encodeURIComponent(trackingNumber)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            const ownerName = data.data.recipient_name || data.data.recipient_phone;
+            document.getElementById('quickBindPanel').querySelector('p').innerHTML =
+              `快速绑定与 <strong>${maskPhone(data.data.recipient_phone)}</strong> 的邻居关系，绑定后即可代取此快递`;
+          }
+        });
+    }
+
+    function hideQuickBind() {
+      document.getElementById('quickBindPanel').style.display = 'none';
+      currentQuickBindTracking = null;
+      currentQuickBindPhone = null;
+    }
+
+    function quickBindNeighbor() {
+      if (!currentQuickBindTracking || !currentQuickBindPhone) {
+        alert('参数错误，请重新查询');
+        return;
+      }
+
+      const relationType = document.getElementById('quickBindRelationType').value;
+      const address = document.getElementById('quickBindAddress').value.trim();
+      const floor = document.getElementById('quickBindFloor').value.trim();
+      const pickupName = document.getElementById('pickupName').value.trim();
+
+      fetch('/api/packages/tracking/' + encodeURIComponent(currentQuickBindTracking))
+        .then(res => res.json())
+        .then(pkgData => {
+          if (!pkgData.success || !pkgData.data) {
+            alert('获取快递信息失败');
+            return;
+          }
+
+          const ownerPhone = pkgData.data.recipient_phone;
+          const ownerConfirmed = currentBindMode === 'instant';
+
+          if (ownerConfirmed) {
+            const inputOwnerPhone = document.getElementById('quickBindOwnerPhone').value.trim();
+            if (!inputOwnerPhone) {
+              alert('请输入主取件人手机号');
+              return;
+            }
+            if (inputOwnerPhone !== ownerPhone) {
+              alert('主取件人手机号与快递收件人不一致，无法立即生效');
+              return;
+            }
+          }
+
+          fetch('/api/neighbors/bind', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ownerPhone: ownerPhone,
+              neighborPhone: currentQuickBindPhone,
+              neighborName: pickupName,
+              relationType,
+              address,
+              floor,
+              ownerConfirmed
+            })
+          })
+          .then(res => res.json())
+          .then(bindData => {
+            if (!bindData.success) {
+              alert(bindData.error || '绑定失败');
+              return;
+            }
+
+            if (bindData.data.status === 'pending') {
+              alert('绑定申请已提交，等待对方批准后即可代取');
+              hideQuickBind();
+              return;
+            }
+
+            alert('绑定成功！');
+            hideQuickBind();
+
+            fetch('/api/packages/check-permission', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                trackingNumber: currentQuickBindTracking,
+                pickupPhone: currentQuickBindPhone
+              })
+            })
+            .then(res => res.json())
+            .then(permData => {
+              if (permData.success && permData.data && permData.data.allowed) {
+                currentPermission = permData.data;
+                fetch(`/api/packages/tracking/${encodeURIComponent(currentQuickBindTracking)}`)
+                  .then(res => res.json())
+                  .then(pkgData2 => {
+                    if (pkgData2.success && pkgData2.data) {
+                      showPackageInfo(pkgData2.data);
+                    }
+                  });
+              }
+            });
+          })
+          .catch(err => {
+            console.error(err);
+            alert('绑定失败，请重试');
+          });
+        });
     }
 
     function showPackageInfo(pkg) {

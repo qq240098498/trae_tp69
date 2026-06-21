@@ -754,7 +754,7 @@ function validateNeighborPhone(phone) {
 
 app.post('/api/neighbors/bind', (req, res) => {
   try {
-    let { ownerPhone, neighborPhone, neighborName, relationType, address, floor } = req.body;
+    let { ownerPhone, neighborPhone, neighborName, relationType, address, floor, ownerConfirmed } = req.body;
 
     ownerPhone = ownerPhone ? ownerPhone.trim() : '';
     neighborPhone = neighborPhone ? neighborPhone.trim() : '';
@@ -762,6 +762,7 @@ app.post('/api/neighbors/bind', (req, res) => {
     relationType = relationType || 'same_floor';
     address = address ? address.trim() : '';
     floor = floor ? floor.trim() : '';
+    ownerConfirmed = ownerConfirmed === true || ownerConfirmed === 'true';
 
     const ownerPhoneError = validateNeighborPhone(ownerPhone);
     if (ownerPhoneError) {
@@ -793,19 +794,22 @@ app.post('/api/neighbors/bind', (req, res) => {
       return res.status(400).json({ success: false, error: `楼层长度不能超过 ${MAX_FLOOR_LENGTH} 个字符` });
     }
 
+    const status = ownerConfirmed ? 'approved' : 'pending';
+
     const relation = createNeighborRelation({
       ownerPhone,
       neighborPhone,
       neighborName,
       relationType,
       address,
-      floor
+      floor,
+      status
     });
 
     res.json({
       success: true,
       data: relation,
-      message: '绑定申请已提交，请等待对方确认'
+      message: ownerConfirmed ? '绑定成功' : '绑定申请已提交，请等待对方确认'
     });
   } catch (error) {
     console.error('邻居绑定失败:', error);

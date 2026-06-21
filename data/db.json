@@ -96,14 +96,14 @@
       "zone": "A",
       "row_num": 2,
       "col_num": 3,
-      "is_occupied": 0,
-      "current_package_id": null,
+      "is_occupied": 1,
+      "current_package_id": 8,
       "created_at": "2026-06-21T02:31:34.906Z",
       "is_big_item_zone": 0,
-      "in_count": 0,
+      "in_count": 1,
       "out_count": 0,
-      "total_activity": 0,
-      "last_activity_time": null
+      "total_activity": 1,
+      "last_activity_time": "2026-06-21T11:50:56.580Z"
     },
     {
       "id": 8,
@@ -918,7 +918,14 @@
       "reminder_count": 0,
       "last_reminder_time": null,
       "note": "",
-      "created_at": "2026-06-21T02:34:48.928Z"
+      "created_at": "2026-06-21T02:34:48.928Z",
+      "contact_attempts": 0,
+      "last_contact_time": null,
+      "contact_status": "pending",
+      "disposal_status": "pending",
+      "disposal_method": null,
+      "disposal_time": null,
+      "disposal_note": ""
     },
     {
       "id": 2,
@@ -936,7 +943,14 @@
       "reminder_count": 1,
       "last_reminder_time": "2026-06-21T02:34:49.170Z",
       "note": "",
-      "created_at": "2026-06-21T02:34:48.976Z"
+      "created_at": "2026-06-21T02:34:48.976Z",
+      "contact_attempts": 0,
+      "last_contact_time": null,
+      "contact_status": "pending",
+      "disposal_status": "pending",
+      "disposal_method": null,
+      "disposal_time": null,
+      "disposal_note": ""
     },
     {
       "id": 3,
@@ -954,7 +968,14 @@
       "reminder_count": 0,
       "last_reminder_time": null,
       "note": "",
-      "created_at": "2026-06-21T02:34:49.056Z"
+      "created_at": "2026-06-21T02:34:49.056Z",
+      "contact_attempts": 0,
+      "last_contact_time": null,
+      "contact_status": "pending",
+      "disposal_status": "pending",
+      "disposal_method": null,
+      "disposal_time": null,
+      "disposal_note": ""
     },
     {
       "id": 4,
@@ -972,7 +993,14 @@
       "reminder_count": 0,
       "last_reminder_time": null,
       "note": "",
-      "created_at": "2026-06-21T02:36:31.029Z"
+      "created_at": "2026-06-21T02:36:31.029Z",
+      "contact_attempts": 0,
+      "last_contact_time": null,
+      "contact_status": "pending",
+      "disposal_status": "pending",
+      "disposal_method": null,
+      "disposal_time": null,
+      "disposal_note": ""
     },
     {
       "id": 5,
@@ -991,7 +1019,14 @@
       "last_reminder_time": null,
       "note": "",
       "is_big_item": 0,
-      "created_at": "2026-06-21T06:35:53.277Z"
+      "created_at": "2026-06-21T06:35:53.277Z",
+      "contact_attempts": 0,
+      "last_contact_time": null,
+      "contact_status": "pending",
+      "disposal_status": "pending",
+      "disposal_method": null,
+      "disposal_time": null,
+      "disposal_note": ""
     },
     {
       "id": 6,
@@ -1010,7 +1045,14 @@
       "last_reminder_time": null,
       "note": "",
       "is_big_item": 1,
-      "created_at": "2026-06-21T06:35:59.521Z"
+      "created_at": "2026-06-21T06:35:59.521Z",
+      "contact_attempts": 0,
+      "last_contact_time": null,
+      "contact_status": "pending",
+      "disposal_status": "pending",
+      "disposal_method": null,
+      "disposal_time": null,
+      "disposal_note": ""
     },
     {
       "id": 7,
@@ -1032,7 +1074,33 @@
       "created_at": "2026-06-21T07:45:59.687Z",
       "is_proxy_pickup": 1,
       "proxy_pickup_phone": "13900139000",
-      "proxy_pickup_name": "??"
+      "proxy_pickup_name": "??",
+      "contact_attempts": 0,
+      "last_contact_time": null,
+      "contact_status": "pending",
+      "disposal_status": "pending",
+      "disposal_method": null,
+      "disposal_time": null,
+      "disposal_note": ""
+    },
+    {
+      "id": 8,
+      "tracking_number": "TEST999888777",
+      "recipient_phone": "13900139000",
+      "recipient_name": "李四",
+      "shelf_id": 7,
+      "shelf_code": "A-2-3",
+      "status": "in_stock",
+      "in_time": "2026-06-21T11:50:56.579Z",
+      "out_time": null,
+      "signature": null,
+      "is_overdue": 0,
+      "is_abnormal": 0,
+      "reminder_count": 0,
+      "last_reminder_time": null,
+      "note": "",
+      "is_big_item": 0,
+      "created_at": "2026-06-21T11:50:56.580Z"
     }
   ],
   "notifications": [
@@ -1195,16 +1263,37 @@
       "content": "【快递代收点】您的快递（运单号：SF1234567890）已由邻居 ?? 代取，请及时查收。",
       "status": "sent",
       "sent_at": "2026-06-21T07:46:52.415Z"
+    },
+    {
+      "id": 17,
+      "package_id": 8,
+      "tracking_number": "TEST999888777",
+      "recipient_phone": "13900139000",
+      "type": "sms",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：TEST999888777，货架位：A-2-3，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T11:50:56.584Z"
+    },
+    {
+      "id": 18,
+      "package_id": 8,
+      "tracking_number": "TEST999888777",
+      "recipient_phone": "13900139000",
+      "type": "app_push",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：TEST999888777，货架位：A-2-3，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T11:50:56.603Z"
     }
   ],
   "nextIds": {
     "shelves": 61,
-    "packages": 8,
-    "notifications": 17,
+    "packages": 9,
+    "notifications": 19,
     "returnOrders": 7,
-    "shelfActivity": 6,
+    "shelfActivity": 7,
     "bigItemWarnings": 1,
-    "neighborRelations": 2
+    "neighborRelations": 4,
+    "disposalRecords": 1
   },
   "returnOrders": [
     {
@@ -1328,6 +1417,13 @@
       "shelf_code": "A-2-2",
       "activity_type": "out",
       "activity_time": "2026-06-21T07:46:52.414Z"
+    },
+    {
+      "id": 6,
+      "shelf_id": 7,
+      "shelf_code": "A-2-3",
+      "activity_type": "in",
+      "activity_time": "2026-06-21T11:50:56.580Z"
     }
   ],
   "bigItemWarnings": [],
@@ -1366,6 +1462,31 @@
       "status": "approved",
       "created_at": "2026-06-21T07:45:07.255Z",
       "updated_at": "2026-06-21T07:45:33.131Z"
+    },
+    {
+      "id": 2,
+      "owner_phone": "13900139000",
+      "neighbor_phone": "13700137000",
+      "neighbor_name": "王五",
+      "relation_type": "same_floor",
+      "address": "阳光小区",
+      "floor": "15层",
+      "status": "pending",
+      "created_at": "2026-06-21T11:50:56.639Z",
+      "updated_at": "2026-06-21T11:50:56.639Z"
+    },
+    {
+      "id": 3,
+      "owner_phone": "13900139000",
+      "neighbor_phone": "13600136000",
+      "neighbor_name": "赵六",
+      "relation_type": "same_building",
+      "address": "阳光小区",
+      "floor": "12层",
+      "status": "approved",
+      "created_at": "2026-06-21T11:50:56.650Z",
+      "updated_at": "2026-06-21T11:50:56.650Z"
     }
-  ]
+  ],
+  "disposalRecords": []
 }

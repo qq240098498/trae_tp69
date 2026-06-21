@@ -871,7 +871,7 @@ function findOptimalEmptyShelf(isBigItem = false) {
 }
 
 function createNeighborRelation(data) {
-  const { ownerPhone, neighborPhone, neighborName, relationType, address, floor } = data;
+  const { ownerPhone, neighborPhone, neighborName, relationType, address, floor, status } = data;
 
   const existing = db.neighborRelations.find(r =>
     r.owner_phone === ownerPhone &&
@@ -882,6 +882,9 @@ function createNeighborRelation(data) {
     throw new Error('已存在该邻居绑定关系或申请');
   }
 
+  const validStatuses = ['pending', 'approved'];
+  const initialStatus = validStatuses.includes(status) ? status : 'pending';
+
   const relation = {
     id: db.nextIds.neighborRelations++,
     owner_phone: ownerPhone,
@@ -890,7 +893,7 @@ function createNeighborRelation(data) {
     relation_type: relationType || 'same_floor',
     address: address || '',
     floor: floor || '',
-    status: 'pending',
+    status: initialStatus,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
