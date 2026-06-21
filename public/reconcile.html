@@ -119,8 +119,8 @@
           <option value="pending">处理中</option>
         </select>
         <input type="text" id="filterKeyword" placeholder="订单号 / 退货单号 / 手机号" onkeypress="if(event.key==='Enter') loadOrders()">
-        <button class="btn btn-primary btn-sm" onclick="loadOrders()">🔍 查询</button>
-        <button class="btn btn-warning btn-sm" onclick="reconcileAll()">🔄 一键对账</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="loadOrders()">🔍 查询</button>
+        <button type="button" class="btn btn-warning btn-sm" onclick="reconcileAll()">🔄 一键对账</button>
       </div>
       <table>
         <thead>
@@ -192,8 +192,8 @@
           </div>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px;">
-          <button class="btn btn-secondary" style="flex: 1;" onclick="closeEditModal()">取消</button>
-          <button class="btn btn-primary" style="flex: 1;" onclick="submitEdit()">保存并对账</button>
+          <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeEditModal()">取消</button>
+          <button type="button" class="btn btn-primary" style="flex: 1;" onclick="submitEdit()">保存并对账</button>
         </div>
       </div>
     </div>
@@ -204,10 +204,10 @@
 
     function loadStats() {
       fetch('/api/return-orders/stats')
-        .then(res => res.json())
-        .then(data => {
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
           if (data.success) {
-            const s = data.data;
+            var s = data.data;
             document.getElementById('statMatched').textContent = s.matched || 0;
             document.getElementById('statRefundedNotShipped').textContent = s.refunded_not_shipped || 0;
             document.getElementById('statShippedNotRefunded').textContent = s.shipped_not_refunded || 0;
@@ -215,7 +215,7 @@
             document.getElementById('statTotal').textContent = s.total || 0;
           }
         })
-        .catch(err => console.error('加载对账统计失败:', err));
+        .catch(function(err) { console.error('加载对账统计失败:', err); });
     }
 
     function loadOrders() {
@@ -223,49 +223,50 @@
       currentFilters.reconcileStatus = document.getElementById('filterStatus').value;
       currentFilters.keyword = document.getElementById('filterKeyword').value.trim();
 
-      const params = new URLSearchParams({
+      var params = new URLSearchParams({
         platform: currentFilters.platform,
         reconcileStatus: currentFilters.reconcileStatus,
         keyword: currentFilters.keyword
       });
 
       fetch('/api/return-orders?' + params.toString())
-        .then(res => res.json())
-        .then(data => {
-          const tbody = document.getElementById('ordersTable');
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          var tbody = document.getElementById('ordersTable');
           if (data.success && data.data.length > 0) {
-            tbody.innerHTML = data.data.map(o => `
-              <tr>
-                <td>${getPlatformBadge(o.platform)}</td>
-                <td>${escapeHtml(o.platform_order_no)}</td>
-                <td>${o.return_tracking_number ? escapeHtml(o.return_tracking_number) : '<span style="color:#bbb;">未寄出</span>'}</td>
-                <td>${escapeHtml(o.buyer_phone) || '-'}</td>
-                <td>${getRefundBadge(o.refund_status)}</td>
-                <td>${getShipBadge(o.ship_status)}</td>
-                <td class="amount-cell">${o.amount > 0 ? '¥' + Number(o.amount).toFixed(2) : '-'}</td>
-                <td>${getReconcileBadge(o.reconcile_status)}</td>
-                <td>${o.reconcile_time ? formatTime(o.reconcile_time) : '-'}</td>
-                <td>
-                  <button class="btn btn-primary btn-sm" onclick="openEditModal(${o.id})">编辑</button>
-                  <button class="btn btn-secondary btn-sm" onclick="reconcileOne(${o.id})">对账</button>
-                  <button class="btn btn-danger btn-sm" onclick="deleteOrder(${o.id})">删除</button>
-                </td>
-              </tr>
-            `).join('');
+            tbody.innerHTML = data.data.map(function(o) {
+              return '<tr>' +
+                '<td>' + getPlatformBadge(o.platform) + '</td>' +
+                '<td>' + escapeHtml(o.platform_order_no) + '</td>' +
+                '<td>' + (o.return_tracking_number ? escapeHtml(o.return_tracking_number) : '<span style="color:#bbb;">未寄出</span>') + '</td>' +
+                '<td>' + (escapeHtml(o.buyer_phone) || '-') + '</td>' +
+                '<td>' + getRefundBadge(o.refund_status) + '</td>' +
+                '<td>' + getShipBadge(o.ship_status) + '</td>' +
+                '<td class="amount-cell">' + (o.amount > 0 ? '¥' + Number(o.amount).toFixed(2) : '-') + '</td>' +
+                '<td>' + getReconcileBadge(o.reconcile_status) + '</td>' +
+                '<td>' + (o.reconcile_time ? formatTime(o.reconcile_time) : '-') + '</td>' +
+                '<td>' +
+                  '<button type="button" class="btn btn-primary btn-sm" onclick="openEditModal(' + o.id + ')">编辑</button> ' +
+                  '<button type="button" class="btn btn-secondary btn-sm" onclick="reconcileOne(' + o.id + ')">对账</button> ' +
+                  '<button type="button" class="btn btn-danger btn-sm" onclick="deleteOrder(' + o.id + ')">删除</button>' +
+                '</td>' +
+              '</tr>';
+            }).join('');
           } else {
             tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #999; padding: 20px;">暂无退货单记录</td></tr>';
           }
         })
-        .catch(err => {
-          console.error(err);
+        .catch(function(err) {
+          console.error('loadOrders error:', err);
           document.getElementById('ordersTable').innerHTML = '<tr><td colspan="10" style="text-align: center; color: #e74c3c; padding: 20px;">加载失败</td></tr>';
         });
     }
 
     document.getElementById('addForm').addEventListener('submit', function(e) {
       e.preventDefault();
+      e.stopPropagation();
 
-      const payload = {
+      var payload = {
         platform: document.getElementById('platform').value,
         platformOrderNo: document.getElementById('platformOrderNo').value.trim(),
         returnTrackingNumber: document.getElementById('returnTrackingNumber').value.trim(),
@@ -286,8 +287,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      .then(res => res.json())
-      .then(data => {
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
         if (data.success) {
           alert('录入成功！对账状态：' + getReconcileText(data.data.reconcile_status));
           document.getElementById('addForm').reset();
@@ -297,21 +298,21 @@
           alert(data.error || '录入失败');
         }
       })
-      .catch(err => {
-        console.error(err);
-        alert('网络错误，请重试');
+      .catch(function(err) {
+        console.error('addForm submit error:', err);
+        alert('网络错误，请重试：' + (err.message || ''));
       });
     });
 
     function openEditModal(id) {
-      fetch(`/api/return-orders/${id}`)
-        .then(res => res.json())
-        .then(data => {
+      fetch('/api/return-orders/' + id)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
           if (!data.success) {
             alert(data.error || '加载失败');
             return;
           }
-          const o = data.data;
+          var o = data.data;
           document.getElementById('editId').value = o.id;
           document.getElementById('editPlatform').value = o.platform;
           document.getElementById('editPlatformOrderNo').value = o.platform_order_no || '';
@@ -323,9 +324,9 @@
           document.getElementById('editRemark').value = o.remark || '';
           document.getElementById('editModal').style.display = 'flex';
         })
-        .catch(err => {
-          console.error(err);
-          alert('加载失败');
+        .catch(function(err) {
+          console.error('openEditModal error:', err);
+          alert('加载失败：' + (err.message || ''));
         });
     }
 
@@ -334,8 +335,8 @@
     }
 
     function submitEdit() {
-      const id = document.getElementById('editId').value;
-      const payload = {
+      var id = document.getElementById('editId').value;
+      var payload = {
         platform: document.getElementById('editPlatform').value,
         platformOrderNo: document.getElementById('editPlatformOrderNo').value.trim(),
         returnTrackingNumber: document.getElementById('editReturnTrackingNumber').value.trim(),
@@ -351,13 +352,13 @@
         return;
       }
 
-      fetch(`/api/return-orders/${id}`, {
+      fetch('/api/return-orders/' + id, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      .then(res => res.json())
-      .then(data => {
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
         if (data.success) {
           alert('保存成功！对账状态：' + getReconcileText(data.data.reconcile_status));
           closeEditModal();
@@ -367,17 +368,17 @@
           alert(data.error || '保存失败');
         }
       })
-      .catch(err => {
-        console.error(err);
-        alert('网络错误，请重试');
+      .catch(function(err) {
+        console.error('submitEdit error:', err);
+        alert('网络错误，请重试：' + (err.message || ''));
       });
     }
 
     function deleteOrder(id) {
       if (!confirm('确定要删除该退货单吗？')) return;
-      fetch(`/api/return-orders/${id}`, { method: 'DELETE' })
-        .then(res => res.json())
-        .then(data => {
+      fetch('/api/return-orders/' + id, { method: 'DELETE' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
           if (data.success) {
             alert('已删除');
             loadStats();
@@ -386,19 +387,20 @@
             alert(data.error || '删除失败');
           }
         })
-        .catch(err => {
-          console.error(err);
-          alert('删除失败');
+        .catch(function(err) {
+          console.error('deleteOrder error:', err);
+          alert('删除失败：' + (err.message || ''));
         });
     }
 
     function reconcileOne(id) {
-      fetch(`/api/return-orders/${id}/reconcile`, {
+      fetch('/api/return-orders/' + id + '/reconcile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       })
-      .then(res => res.json())
-      .then(data => {
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
         if (data.success) {
           alert('对账完成：' + getReconcileText(data.data.reconcile_status));
           loadStats();
@@ -407,9 +409,9 @@
           alert(data.error || '对账失败');
         }
       })
-      .catch(err => {
-        console.error(err);
-        alert('对账失败');
+      .catch(function(err) {
+        console.error('reconcileOne error:', err);
+        alert('对账失败：' + (err.message || '网络错误'));
       });
     }
 
@@ -417,22 +419,23 @@
       if (!confirm('确定要批量执行对账吗？将重新核对所有退货单。')) return;
       fetch('/api/return-orders/reconcile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       })
-      .then(res => res.json())
-      .then(data => {
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
         if (data.success) {
-          const s = data.data;
-          alert(`批量对账完成，共 ${s.total} 单\n对账一致：${s.matched}\n已退款未寄出：${s.refunded_not_shipped}\n已寄出未退款：${s.shipped_not_refunded}\n处理中：${s.pending}`);
+          var s = data.data;
+          alert('批量对账完成，共 ' + s.total + ' 单\n对账一致：' + s.matched + '\n已退款未寄出：' + s.refunded_not_shipped + '\n已寄出未退款：' + s.shipped_not_refunded + '\n处理中：' + s.pending);
           loadStats();
           loadOrders();
         } else {
           alert(data.error || '对账失败');
         }
       })
-      .catch(err => {
-        console.error(err);
-        alert('对账失败');
+      .catch(function(err) {
+        console.error('reconcileAll error:', err);
+        alert('对账失败：' + (err.message || '网络错误'));
       });
     }
 

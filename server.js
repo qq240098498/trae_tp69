@@ -43,9 +43,17 @@ initDatabase();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.json({ limit: '10mb', strict: false }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(function(err, req, res, next) {
+  if (err) {
+    console.error('请求解析错误:', err.message);
+    return res.status(400).json({ success: false, error: '请求数据格式错误' });
+  }
+  next();
+});
 
 function sendSmsNotification(phone, content) {
   console.log(`[短信通知] 发送到 ${phone}: ${content}`);
