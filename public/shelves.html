@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>货架状态 - 快递代收点管理系统</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">📦 快递<span>代收点</span></div>
+    <nav>
+      <a href="/">🏠 入库扫描</a>
+      <a href="/outbound.html">📤 出库核销</a>
+      <a href="/overdue.html">⏰ 滞留件管理</a>
+      <a href="/shelves.html" class="active">🗄️ 货架状态</a>
+      <a href="/notifications.html">📱 通知记录</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>货架状态</h1>
+      <p>实时查看货架使用情况，自动分配最近空位</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">货架总数</div>
+        <div class="stat-value" id="totalShelves">0</div>
+      </div>
+      <div class="stat-card in-stock">
+        <div class="stat-label">已占用</div>
+        <div class="stat-value" id="occupiedShelves">0</div>
+      </div>
+      <div class="stat-card today-in">
+        <div class="stat-label">空闲位</div>
+        <div class="stat-value" id="availableShelves">0</div>
+      </div>
+      <div class="stat-card overdue">
+        <div class="stat-label">使用率</div>
+        <div class="stat-value" id="usageRate">0%</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🗺️ 货架分布图</h2>
+      <div style="margin-bottom: 15px;">
+        <span style="display: inline-flex; align-items: center; margin-right: 20px;">
+          <span style="display: inline-block; width: 20px; height: 20px; background: #e8f5e9; border: 1px dashed #a5d6a7; border-radius: 4px; margin-right: 8px;"></span>
+          空闲
+        </span>
+        <span style="display: inline-flex; align-items: center;">
+          <span style="display: inline-block; width: 20px; height: 20px; background: #ffecb3; border: 1px solid #ffd54f; border-radius: 4px; margin-right: 8px;"></span>
+          已占用
+        </span>
+      </div>
+      
+      <div class="shelf-grid" id="shelfGrid">
+        加载中...
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📋 货架明细</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>货架编号</th>
+            <th>区域</th>
+            <th>行</th>
+            <th>列</th>
+            <th>状态</th>
+            <th>当前快递</th>
+          </tr>
+        </thead>
+        <tbody id="shelfTable">
+          <tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    function loadShelves() {
+      fetch('/api/shelves')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const { shelves, stats } = data.data;
+            
+            document.getElementById('totalShelves').textContent = stats.total;
+            document.getElementById('occupiedShelves').textContent = stats.occupied;
+            document.getElementById('availableShelves').textContent = stats.available;
+            
+            const rate = stats.total > 0 ? Math.round((stats.occupied / stats.total) * 100) : 0;
+            document.getElementById('usageRate').textContent = rate + '%';
+
+            renderShelfGrid(shelves);
+            renderShelfTable(shelves);
+          }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function renderShelfGrid(shelves) {
+      const zones = {};
+      shelves.forEach(shelf => {
+        if (!zones[shelf.zone]) {
+          zones[shelf.zone] = [];
+        }
+        zones[shelf.zone].push(shelf);
+      });
+
+      const gridDiv = document.getElementById('shelfGrid');
+      let html = '';
+
+      for (const zone in zones) {
+        const zoneShelves = zones[zone.zone];
+        const rows = Math.max(...zoneShelves.map(s => s.row_num));
+        const cols = Math.max(...zoneShelves.map(s => s.col_num));
+
+        html += `
+          <div class="shelf-zone">
+            <h3>${zone} 区</h3>
+            <div class="shelf-rows">
+        `;
+
+        for (let r = 1; r <= rows; r++) {
+          html += `<div class="shelf-row"><span class="shelf-row-label">第${r}排</span>`;
+          for (let c = 1; c <= cols; c++) {
+            const shelf = zoneShelves.find(s => s.row_num === r && s.col_num === c);
+            if (shelf) {
+              const statusClass = shelf.is_occupied ? 'occupied' : 'empty';
+              const title = shelf.is_occupied ? `已占用 - ${shelf.shelf_code}` : `空闲 - ${shelf.shelf_code}`;
+              html += `<div class="shelf-cell ${statusClass}" title="${title}">${shelf.shelf_code}</div>`;
+            }
+          }
+          html += `</div>`;
+        }
+
+        html += `</div></div>`;
+      }
+
+      gridDiv.innerHTML = html;
+    }
+
+    function renderShelfTable(shelves) {
+      const tbody = document.getElementById('shelfTable');
+      
+      tbody.innerHTML = shelves.map(shelf => `
+        <tr>
+          <td><strong>${shelf.shelf_code}</strong></td>
+          <td>${shelf.zone} 区</td>
+          <td>第 ${shelf.row_num} 排</td>
+          <td>第 ${shelf.col_num} 列</td>
+          <td>
+            ${shelf.is_occupied ? 
+              '<span class="badge badge-overdue">已占用</span>' : 
+              '<span class="badge badge-in-stock">空闲</span>'
+            }
+          </td>
+          <td>${shelf.current_package_id ? '有快递' : '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    loadShelves();
+    setInterval(loadShelves, 30000);
+  </script>
+</body>
+</html>

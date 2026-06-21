@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>出库核销 - 快递代收点管理系统</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">📦 快递<span>代收点</span></div>
+    <nav>
+      <a href="/">🏠 入库扫描</a>
+      <a href="/outbound.html" class="active">📤 出库核销</a>
+      <a href="/overdue.html">⏰ 滞留件管理</a>
+      <a href="/shelves.html">🗄️ 货架状态</a>
+      <a href="/notifications.html">📱 通知记录</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>出库核销</h1>
+      <p>扫描运单号，收件人签字确认后完成出库</p>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h2>📤 扫码出库</h2>
+        <form id="scanOutForm">
+          <div class="form-group">
+            <label for="trackingNumber">运单号 *</label>
+            <input type="text" id="trackingNumber" name="trackingNumber" placeholder="扫描或输入运单号" required autofocus>
+          </div>
+          <button type="button" class="btn btn-primary" style="width: 100%;" onclick="queryPackage()">
+            🔍 查询快递
+          </button>
+        </form>
+
+        <div id="packageInfo" style="margin-top: 20px; display: none;">
+          <div class="alert alert-info" id="packageStatusAlert">
+            快递信息已加载，请确认后签收
+          </div>
+          <div class="result-item">
+            <span class="result-label">运单号：</span>
+            <span class="result-value" id="infoTracking">-</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">手机号：</span>
+            <span class="result-value" id="infoPhone">-</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">收件人：</span>
+            <span class="result-value" id="infoName">-</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">货架位：</span>
+            <span class="result-value" id="infoShelf">-</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">入库时间：</span>
+            <span class="result-value" id="infoInTime">-</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">状态：</span>
+            <span class="result-value" id="infoStatus">-</span>
+          </div>
+        </div>
+
+        <div class="signature-pad-container" id="signatureContainer" style="display: none;">
+          <label style="display: block; margin-bottom: 6px; font-size: 14px; color: #555; font-weight: 500;">
+            ✍️ 收件人签字 *
+          </label>
+          <canvas id="signaturePad" class="signature-pad" width="400" height="150" style="width: 100%;"></canvas>
+          <p>请在上方区域签字，签字后点击确认出库</p>
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button type="button" class="btn btn-secondary" onclick="clearSignature()" style="flex: 1;">
+              清除签字
+            </button>
+            <button type="button" class="btn btn-success" onclick="confirmPickup()" style="flex: 2;">
+              ✅ 确认出库
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📋 出库记录</h2>
+        <div id="outboundResult" style="min-height: 200px; display: flex; align-items: center; justify-content: center; color: #999;">
+          <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 10px;">📤</div>
+            <p>请在左侧进行出库操作</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📋 今日出库记录</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>运单号</th>
+            <th>手机号</th>
+            <th>货架位</th>
+            <th>入库时间</th>
+            <th>出库时间</th>
+            <th>签字</th>
+          </tr>
+        </thead>
+        <tbody id="todayOutboundTable">
+          <tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    let currentPackage = null;
+    let signaturePad = null;
+    let isDrawing = false;
+
+    function initSignaturePad() {
+      const canvas = document.getElementById('signaturePad');
+      const ctx = canvas.getContext('2d');
+      
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = 150 * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseout', stopDrawing);
+
+      canvas.addEventListener('touchstart', handleTouch);
+      canvas.addEventListener('touchmove', handleTouch);
+      canvas.addEventListener('touchend', stopDrawing);
+
+      function startDrawing(e) {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        ctx.beginPath();
+        ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+      }
+
+      function draw(e) {
+        if (!isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        ctx.stroke();
+      }
+
+      function stopDrawing() {
+        isDrawing = false;
+      }
+
+      function handleTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const touchX = touch.clientX - rect.left;
+        const touchY = touch.clientY - rect.top;
+
+        if (e.type === 'touchstart') {
+          isDrawing = true;
+          ctx.beginPath();
+          ctx.moveTo(touchX, touchY);
+        } else if (e.type === 'touchmove' && isDrawing) {
+          ctx.lineTo(touchX, touchY);
+          ctx.stroke();
+        }
+      }
+
+      signaturePad = { canvas, ctx };
+    }
+
+    function clearSignature() {
+      if (signaturePad) {
+        const canvas = signaturePad.canvas;
+        const ctx = signaturePad.ctx;
+        ctx.clearRect(0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
+      }
+    }
+
+    function getSignatureData() {
+      if (signaturePad) {
+        return signaturePad.canvas.toDataURL();
+      }
+      return '';
+    }
+
+    function isSignatureEmpty() {
+      if (!signaturePad) return true;
+      const canvas = signaturePad.canvas;
+      const ctx = signaturePad.ctx;
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imageData.data;
+      for (let i = 3; i < pixels.length; i += 4) {
+        if (pixels[i] > 0) return false;
+      }
+      return true;
+    }
+
+    function queryPackage() {
+      const trackingNumber = document.getElementById('trackingNumber').value.trim();
+      if (!trackingNumber) {
+        alert('请输入运单号');
+        return;
+      }
+
+      fetch(`/api/packages/search?keyword=${encodeURIComponent(trackingNumber)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data.length > 0) {
+            const pkg = data.data.find(p => p.tracking_number === trackingNumber) || data.data[0];
+            showPackageInfo(pkg);
+          } else {
+            alert('未找到该快递');
+            hidePackageInfo();
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('查询失败');
+        });
+    }
+
+    function showPackageInfo(pkg) {
+      currentPackage = pkg;
+      
+      document.getElementById('infoTracking').textContent = pkg.tracking_number;
+      document.getElementById('infoPhone').textContent = pkg.recipient_phone;
+      document.getElementById('infoName').textContent = pkg.recipient_name || '-';
+      document.getElementById('infoShelf').textContent = pkg.shelf_code || '-';
+      document.getElementById('infoInTime').textContent = formatTime(pkg.in_time);
+      document.getElementById('infoStatus').innerHTML = getStatusBadge(pkg.status);
+
+      const statusAlert = document.getElementById('packageStatusAlert');
+      const signatureContainer = document.getElementById('signatureContainer');
+
+      if (pkg.status === 'picked') {
+        statusAlert.className = 'alert alert-warning';
+        statusAlert.textContent = '⚠️ 该快递已取件';
+        signatureContainer.style.display = 'none';
+      } else if (pkg.status === 'abnormal') {
+        statusAlert.className = 'alert alert-error';
+        statusAlert.textContent = '⚠️ 该快递为异常件，请确认后再出库';
+        signatureContainer.style.display = 'block';
+      } else if (pkg.status === 'overdue') {
+        statusAlert.className = 'alert alert-warning';
+        statusAlert.textContent = '⚠️ 该快递已逾期，请提醒收件人';
+        signatureContainer.style.display = 'block';
+      } else {
+        statusAlert.className = 'alert alert-info';
+        statusAlert.textContent = '✅ 快递信息已确认，请收件人签字';
+        signatureContainer.style.display = 'block';
+      }
+
+      document.getElementById('packageInfo').style.display = 'block';
+      
+      setTimeout(() => {
+        if (!signaturePad) {
+          initSignaturePad();
+        } else {
+          clearSignature();
+        }
+      }, 100);
+    }
+
+    function hidePackageInfo() {
+      currentPackage = null;
+      document.getElementById('packageInfo').style.display = 'none';
+      document.getElementById('signatureContainer').style.display = 'none';
+    }
+
+    function confirmPickup() {
+      if (!currentPackage) {
+        alert('请先查询快递');
+        return;
+      }
+
+      if (isSignatureEmpty()) {
+        alert('请收件人签字');
+        return;
+      }
+
+      const signatureData = getSignatureData();
+
+      fetch('/api/packages/scan-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trackingNumber: currentPackage.tracking_number,
+          signature: signatureData
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showOutboundSuccess(data.data);
+          hidePackageInfo();
+          document.getElementById('trackingNumber').value = '';
+          document.getElementById('trackingNumber').focus();
+          loadTodayOutbound();
+        } else {
+          alert(data.error || '出库失败');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('出库失败，请重试');
+      });
+    }
+
+    function showOutboundSuccess(pkg) {
+      const resultDiv = document.getElementById('outboundResult');
+      const hours = Math.floor((new Date(pkg.out_time) - new Date(pkg.in_time)) / (1000 * 60 * 60));
+      
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = `
+        <div style="width: 100%;">
+          <div class="alert alert-success">
+            ✅ 出库成功！
+          </div>
+          <div class="result-item">
+            <span class="result-label">运单号：</span>
+            <span class="result-value">${pkg.tracking_number}</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">手机号：</span>
+            <span class="result-value">${pkg.recipient_phone}</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">货架位：</span>
+            <span class="result-value">${pkg.shelf_code || '-'}</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">在库时长：</span>
+            <span class="result-value">${hours} 小时</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">出库时间：</span>
+            <span class="result-value">${formatTime(pkg.out_time)}</span>
+          </div>
+          ${pkg.signature ? `
+          <div class="result-item" style="margin-top: 10px;">
+            <span class="result-label">签字：</span>
+            <span class="result-value">
+              <img src="${pkg.signature}" style="max-width: 200px; max-height: 80px; border: 1px solid #eee; border-radius: 4px;">
+            </span>
+          </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function loadTodayOutbound() {
+      fetch('/api/packages?status=picked&limit=20')
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('todayOutboundTable');
+          if (data.success && data.data.length > 0) {
+            tbody.innerHTML = data.data.map(pkg => `
+              <tr>
+                <td>${pkg.tracking_number}</td>
+                <td>${pkg.recipient_phone}</td>
+                <td>${pkg.shelf_code || '-'}</td>
+                <td>${formatTime(pkg.in_time)}</td>
+                <td>${formatTime(pkg.out_time)}</td>
+                <td>${pkg.signature ? '<span style="color: #27ae60;">✓ 已签字</span>' : '-'}</td>
+              </tr>
+            `).join('');
+          } else {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">暂无出库记录</td></tr>';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+        });
+    }
+
+    function getStatusBadge(status) {
+      const statusMap = {
+        'in_stock': { text: '在库', class: 'badge-in-stock' },
+        'picked': { text: '已取件', class: 'badge-picked' },
+        'overdue': { text: '逾期', class: 'badge-overdue' },
+        'abnormal': { text: '异常', class: 'badge-abnormal' }
+      };
+      const s = statusMap[status] || { text: status, class: '' };
+      return `<span class="badge ${s.class}">${s.text}</span>`;
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return '-';
+      const d = new Date(timeStr);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    document.getElementById('trackingNumber').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        queryPackage();
+      }
+    });
+
+    loadTodayOutbound();
+  </script>
+</body>
+</html>

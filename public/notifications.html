@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通知记录 - 快递代收点管理系统</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">📦 快递<span>代收点</span></div>
+    <nav>
+      <a href="/">🏠 入库扫描</a>
+      <a href="/outbound.html">📤 出库核销</a>
+      <a href="/overdue.html">⏰ 滞留件管理</a>
+      <a href="/shelves.html">🗄️ 货架状态</a>
+      <a href="/notifications.html" class="active">📱 通知记录</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>通知记录</h1>
+      <p>查看所有取件通知和催收通知的发送记录</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">通知总数</div>
+        <div class="stat-value" id="totalNotifications">0</div>
+      </div>
+      <div class="stat-card today-in">
+        <div class="stat-label">入库通知</div>
+        <div class="stat-value" id="inboundNotifications">0</div>
+      </div>
+      <div class="stat-card overdue">
+        <div class="stat-label">催收通知</div>
+        <div class="stat-value" id="reminderNotifications">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📋 通知列表</h2>
+      <div class="tabs">
+        <div class="tab active" data-filter="all" onclick="filterNotifications('all')">全部通知</div>
+        <div class="tab" data-filter="sms" onclick="filterNotifications('sms')">短信通知</div>
+        <div class="tab" data-filter="app_push" onclick="filterNotifications('app_push')">APP推送</div>
+        <div class="tab" data-filter="reminder" onclick="filterNotifications('reminder')">催收通知</div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>通知类型</th>
+            <th>运单号</th>
+            <th>手机号</th>
+            <th>通知内容</th>
+            <th>发送时间</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody id="notificationsTable">
+          <tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    let currentFilter = 'all';
+    let allNotifications = [];
+
+    function loadNotifications() {
+      fetch('/api/notifications?limit=200')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            allNotifications = data.data;
+            updateStats();
+            renderNotifications();
+          }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function updateStats() {
+      const total = allNotifications.length;
+      const inbound = allNotifications.filter(n => n.type === 'sms' || n.type === 'app_push').length;
+      const reminder = allNotifications.filter(n => n.type.includes('reminder')).length;
+
+      document.getElementById('totalNotifications').textContent = total;
+      document.getElementById('inboundNotifications').textContent = inbound;
+      document.getElementById('reminderNotifications').textContent = reminder;
+    }
+
+    function filterNotifications(filter) {
+      currentFilter = filter;
+      
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab[data-filter="${filter}"]`).classList.add('active');
+      
+      renderNotifications();
+    }
+
+    function renderNotifications() {
+      let filtered = allNotifications;
+      
+      if (currentFilter !== 'all') {
+        if (currentFilter === 'reminder') {
+          filtered = allNotifications.filter(n => n.type.includes('reminder'));
+        } else {
+          filtered = allNotifications.filter(n => n.type === currentFilter);
+        }
+      }
+
+      const tbody = document.getElementById('notificationsTable');
+      
+      if (filtered.length > 0) {
+        tbody.innerHTML = filtered.map(n => `
+          <tr>
+            <td>${getTypeBadge(n.type)}</td>
+            <td>${n.tracking_number}</td>
+            <td>${n.recipient_phone}</td>
+            <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${n.content}">
+              ${n.content}
+            </td>
+            <td>${formatTime(n.sent_at)}</td>
+            <td>
+              ${n.status === 'sent' ? 
+                '<span class="badge badge-in-stock">已发送</span>' : 
+                '<span class="badge badge-overdue">失败</span>'
+              }
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999; padding: 20px;">暂无通知记录</td></tr>';
+      }
+    }
+
+    function getTypeBadge(type) {
+      const typeMap = {
+        'sms': { text: '短信', class: 'badge-in-stock' },
+        'app_push': { text: 'APP推送', class: 'badge-picked' },
+        'reminder_sms': { text: '催收短信', class: 'badge-overdue' },
+        'auto_reminder': { text: '自动催收', class: 'badge-abnormal' }
+      };
+      const t = typeMap[type] || { text: type, class: '' };
+      return `<span class="badge ${t.class}">${t.text}</span>`;
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return '-';
+      const d = new Date(timeStr);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+    }
+
+    loadNotifications();
+    setInterval(loadNotifications, 30000);
+  </script>
+</body>
+</html>

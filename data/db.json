@@ -1,0 +1,775 @@
+{
+  "shelves": [
+    {
+      "id": 1,
+      "shelf_code": "A-1-1",
+      "zone": "A",
+      "row_num": 1,
+      "col_num": 1,
+      "is_occupied": 1,
+      "current_package_id": 4,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 2,
+      "shelf_code": "A-1-2",
+      "zone": "A",
+      "row_num": 1,
+      "col_num": 2,
+      "is_occupied": 1,
+      "current_package_id": 2,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 3,
+      "shelf_code": "A-1-3",
+      "zone": "A",
+      "row_num": 1,
+      "col_num": 3,
+      "is_occupied": 1,
+      "current_package_id": 3,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 4,
+      "shelf_code": "A-1-4",
+      "zone": "A",
+      "row_num": 1,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 5,
+      "shelf_code": "A-2-1",
+      "zone": "A",
+      "row_num": 2,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 6,
+      "shelf_code": "A-2-2",
+      "zone": "A",
+      "row_num": 2,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 7,
+      "shelf_code": "A-2-3",
+      "zone": "A",
+      "row_num": 2,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 8,
+      "shelf_code": "A-2-4",
+      "zone": "A",
+      "row_num": 2,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 9,
+      "shelf_code": "A-3-1",
+      "zone": "A",
+      "row_num": 3,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 10,
+      "shelf_code": "A-3-2",
+      "zone": "A",
+      "row_num": 3,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 11,
+      "shelf_code": "A-3-3",
+      "zone": "A",
+      "row_num": 3,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 12,
+      "shelf_code": "A-3-4",
+      "zone": "A",
+      "row_num": 3,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 13,
+      "shelf_code": "A-4-1",
+      "zone": "A",
+      "row_num": 4,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 14,
+      "shelf_code": "A-4-2",
+      "zone": "A",
+      "row_num": 4,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 15,
+      "shelf_code": "A-4-3",
+      "zone": "A",
+      "row_num": 4,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 16,
+      "shelf_code": "A-4-4",
+      "zone": "A",
+      "row_num": 4,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 17,
+      "shelf_code": "A-5-1",
+      "zone": "A",
+      "row_num": 5,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 18,
+      "shelf_code": "A-5-2",
+      "zone": "A",
+      "row_num": 5,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 19,
+      "shelf_code": "A-5-3",
+      "zone": "A",
+      "row_num": 5,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 20,
+      "shelf_code": "A-5-4",
+      "zone": "A",
+      "row_num": 5,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 21,
+      "shelf_code": "B-1-1",
+      "zone": "B",
+      "row_num": 1,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 22,
+      "shelf_code": "B-1-2",
+      "zone": "B",
+      "row_num": 1,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 23,
+      "shelf_code": "B-1-3",
+      "zone": "B",
+      "row_num": 1,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 24,
+      "shelf_code": "B-1-4",
+      "zone": "B",
+      "row_num": 1,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 25,
+      "shelf_code": "B-2-1",
+      "zone": "B",
+      "row_num": 2,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 26,
+      "shelf_code": "B-2-2",
+      "zone": "B",
+      "row_num": 2,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 27,
+      "shelf_code": "B-2-3",
+      "zone": "B",
+      "row_num": 2,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 28,
+      "shelf_code": "B-2-4",
+      "zone": "B",
+      "row_num": 2,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 29,
+      "shelf_code": "B-3-1",
+      "zone": "B",
+      "row_num": 3,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 30,
+      "shelf_code": "B-3-2",
+      "zone": "B",
+      "row_num": 3,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 31,
+      "shelf_code": "B-3-3",
+      "zone": "B",
+      "row_num": 3,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 32,
+      "shelf_code": "B-3-4",
+      "zone": "B",
+      "row_num": 3,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 33,
+      "shelf_code": "B-4-1",
+      "zone": "B",
+      "row_num": 4,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 34,
+      "shelf_code": "B-4-2",
+      "zone": "B",
+      "row_num": 4,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 35,
+      "shelf_code": "B-4-3",
+      "zone": "B",
+      "row_num": 4,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 36,
+      "shelf_code": "B-4-4",
+      "zone": "B",
+      "row_num": 4,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 37,
+      "shelf_code": "B-5-1",
+      "zone": "B",
+      "row_num": 5,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 38,
+      "shelf_code": "B-5-2",
+      "zone": "B",
+      "row_num": 5,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 39,
+      "shelf_code": "B-5-3",
+      "zone": "B",
+      "row_num": 5,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 40,
+      "shelf_code": "B-5-4",
+      "zone": "B",
+      "row_num": 5,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 41,
+      "shelf_code": "C-1-1",
+      "zone": "C",
+      "row_num": 1,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 42,
+      "shelf_code": "C-1-2",
+      "zone": "C",
+      "row_num": 1,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 43,
+      "shelf_code": "C-1-3",
+      "zone": "C",
+      "row_num": 1,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 44,
+      "shelf_code": "C-1-4",
+      "zone": "C",
+      "row_num": 1,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 45,
+      "shelf_code": "C-2-1",
+      "zone": "C",
+      "row_num": 2,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 46,
+      "shelf_code": "C-2-2",
+      "zone": "C",
+      "row_num": 2,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.906Z"
+    },
+    {
+      "id": 47,
+      "shelf_code": "C-2-3",
+      "zone": "C",
+      "row_num": 2,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 48,
+      "shelf_code": "C-2-4",
+      "zone": "C",
+      "row_num": 2,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 49,
+      "shelf_code": "C-3-1",
+      "zone": "C",
+      "row_num": 3,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 50,
+      "shelf_code": "C-3-2",
+      "zone": "C",
+      "row_num": 3,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 51,
+      "shelf_code": "C-3-3",
+      "zone": "C",
+      "row_num": 3,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 52,
+      "shelf_code": "C-3-4",
+      "zone": "C",
+      "row_num": 3,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 53,
+      "shelf_code": "C-4-1",
+      "zone": "C",
+      "row_num": 4,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 54,
+      "shelf_code": "C-4-2",
+      "zone": "C",
+      "row_num": 4,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 55,
+      "shelf_code": "C-4-3",
+      "zone": "C",
+      "row_num": 4,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 56,
+      "shelf_code": "C-4-4",
+      "zone": "C",
+      "row_num": 4,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 57,
+      "shelf_code": "C-5-1",
+      "zone": "C",
+      "row_num": 5,
+      "col_num": 1,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 58,
+      "shelf_code": "C-5-2",
+      "zone": "C",
+      "row_num": 5,
+      "col_num": 2,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 59,
+      "shelf_code": "C-5-3",
+      "zone": "C",
+      "row_num": 5,
+      "col_num": 3,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    },
+    {
+      "id": 60,
+      "shelf_code": "C-5-4",
+      "zone": "C",
+      "row_num": 5,
+      "col_num": 4,
+      "is_occupied": 0,
+      "current_package_id": null,
+      "created_at": "2026-06-21T02:31:34.907Z"
+    }
+  ],
+  "packages": [
+    {
+      "id": 1,
+      "tracking_number": "SF1234567890123",
+      "recipient_phone": "13800138001",
+      "recipient_name": "张三",
+      "shelf_id": 1,
+      "shelf_code": "A-1-1",
+      "status": "picked",
+      "in_time": "2026-06-21T02:34:48.928Z",
+      "out_time": "2026-06-21T02:34:49.142Z",
+      "signature": "测试签字",
+      "is_overdue": 0,
+      "is_abnormal": 0,
+      "reminder_count": 0,
+      "last_reminder_time": null,
+      "note": "",
+      "created_at": "2026-06-21T02:34:48.928Z"
+    },
+    {
+      "id": 2,
+      "tracking_number": "YT9876543210987",
+      "recipient_phone": "13900139002",
+      "recipient_name": "李四",
+      "shelf_id": 2,
+      "shelf_code": "A-1-2",
+      "status": "in_stock",
+      "in_time": "2026-06-21T02:34:48.976Z",
+      "out_time": null,
+      "signature": null,
+      "is_overdue": 0,
+      "is_abnormal": 0,
+      "reminder_count": 1,
+      "last_reminder_time": "2026-06-21T02:34:49.170Z",
+      "note": "",
+      "created_at": "2026-06-21T02:34:48.976Z"
+    },
+    {
+      "id": 3,
+      "tracking_number": "ZTO5566778899",
+      "recipient_phone": "13700137003",
+      "recipient_name": "王五",
+      "shelf_id": 3,
+      "shelf_code": "A-1-3",
+      "status": "in_stock",
+      "in_time": "2026-06-21T02:34:49.056Z",
+      "out_time": null,
+      "signature": null,
+      "is_overdue": 0,
+      "is_abnormal": 0,
+      "reminder_count": 0,
+      "last_reminder_time": null,
+      "note": "",
+      "created_at": "2026-06-21T02:34:49.056Z"
+    },
+    {
+      "id": 4,
+      "tracking_number": "13213",
+      "recipient_phone": "123213",
+      "recipient_name": "12312",
+      "shelf_id": 1,
+      "shelf_code": "A-1-1",
+      "status": "in_stock",
+      "in_time": "2026-06-21T02:36:31.029Z",
+      "out_time": null,
+      "signature": null,
+      "is_overdue": 0,
+      "is_abnormal": 0,
+      "reminder_count": 0,
+      "last_reminder_time": null,
+      "note": "",
+      "created_at": "2026-06-21T02:36:31.029Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": 1,
+      "package_id": 1,
+      "tracking_number": "SF1234567890123",
+      "recipient_phone": "13800138001",
+      "type": "sms",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：SF1234567890123，货架位：A-1-1，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T02:34:48.932Z"
+    },
+    {
+      "id": 2,
+      "package_id": 1,
+      "tracking_number": "SF1234567890123",
+      "recipient_phone": "13800138001",
+      "type": "app_push",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：SF1234567890123，货架位：A-1-1，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T02:34:48.950Z"
+    },
+    {
+      "id": 3,
+      "package_id": 2,
+      "tracking_number": "YT9876543210987",
+      "recipient_phone": "13900139002",
+      "type": "sms",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：YT9876543210987，货架位：A-1-2，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T02:34:48.989Z"
+    },
+    {
+      "id": 4,
+      "package_id": 2,
+      "tracking_number": "YT9876543210987",
+      "recipient_phone": "13900139002",
+      "type": "app_push",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：YT9876543210987，货架位：A-1-2，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T02:34:49.010Z"
+    },
+    {
+      "id": 5,
+      "package_id": 3,
+      "tracking_number": "ZTO5566778899",
+      "recipient_phone": "13700137003",
+      "type": "sms",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：ZTO5566778899，货架位：A-1-3，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T02:34:49.085Z"
+    },
+    {
+      "id": 6,
+      "package_id": 3,
+      "tracking_number": "ZTO5566778899",
+      "recipient_phone": "13700137003",
+      "type": "app_push",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：ZTO5566778899，货架位：A-1-3，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T02:34:49.105Z"
+    },
+    {
+      "id": 7,
+      "package_id": 2,
+      "tracking_number": "YT9876543210987",
+      "recipient_phone": "13900139002",
+      "type": "reminder_sms",
+      "content": "【快递代收点】温馨提醒：您的快递（运单号：YT9876543210987，货架位：A-1-2）已存放0小时未取，请尽快取件，超7天将按异常件处理。",
+      "status": "sent",
+      "sent_at": "2026-06-21T02:34:49.160Z"
+    },
+    {
+      "id": 8,
+      "package_id": 4,
+      "tracking_number": "13213",
+      "recipient_phone": "123213",
+      "type": "sms",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：13213，货架位：A-1-1，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T02:36:31.042Z"
+    },
+    {
+      "id": 9,
+      "package_id": 4,
+      "tracking_number": "13213",
+      "recipient_phone": "123213",
+      "type": "app_push",
+      "content": "【快递代收点】您的快递已到达代收点，运单号：13213，货架位：A-1-1，请凭手机号后4位及时取件。",
+      "status": "sent",
+      "sent_at": "2026-06-21T02:36:31.061Z"
+    }
+  ],
+  "nextIds": {
+    "shelves": 61,
+    "packages": 5,
+    "notifications": 10
+  }
+}

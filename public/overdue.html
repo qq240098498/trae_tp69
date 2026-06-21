@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>滞留件管理 - 快递代收点管理系统</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">📦 快递<span>代收点</span></div>
+    <nav>
+      <a href="/">🏠 入库扫描</a>
+      <a href="/outbound.html">📤 出库核销</a>
+      <a href="/overdue.html" class="active">⏰ 滞留件管理</a>
+      <a href="/shelves.html">🗄️ 货架状态</a>
+      <a href="/notifications.html">📱 通知记录</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>滞留件管理</h1>
+      <p>超过48小时未取自动催收，超7天未取标记为异常件</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card in-stock">
+        <div class="stat-label">在库件数</div>
+        <div class="stat-value" id="inStock">0</div>
+      </div>
+      <div class="stat-card overdue">
+        <div class="stat-label">逾期件（&gt;48h）</div>
+        <div class="stat-value" id="overdueCount">0</div>
+      </div>
+      <div class="stat-card abnormal">
+        <div class="stat-label">异常件（&gt;7天）</div>
+        <div class="stat-value" id="abnormalCount">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" data-tab="overdue" onclick="switchTab('overdue')">
+          ⏰ 逾期件（&gt;48小时）
+        </div>
+        <div class="tab" data-tab="abnormal" onclick="switchTab('abnormal')">
+          ⚠️ 异常件（&gt;7天）
+        </div>
+        <div class="tab" data-tab="all" onclick="switchTab('all')">
+          📦 全部在库
+        </div>
+      </div>
+
+      <div id="overduePanel">
+        <div style="margin-bottom: 15px;">
+          <button class="btn btn-warning btn-sm" onclick="sendAllReminders()">
+            📢 一键催收全部逾期件
+          </button>
+          <span style="color: #999; font-size: 12px; margin-left: 10px;">
+            系统每小时自动检查并催收一次
+          </span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>运单号</th>
+              <th>手机号</th>
+              <th>货架位</th>
+              <th>入库时间</th>
+              <th>滞留时长</th>
+              <th>催收次数</th>
+              <th>上次催收</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="overdueTable">
+            <tr><td colspan="8" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="abnormalPanel" style="display: none;">
+        <table>
+          <thead>
+            <tr>
+              <th>运单号</th>
+              <th>手机号</th>
+              <th>货架位</th>
+              <th>入库时间</th>
+              <th>滞留时长</th>
+              <th>催收次数</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="abnormalTable">
+            <tr><td colspan="8" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="allPanel" style="display: none;">
+        <table>
+          <thead>
+            <tr>
+              <th>运单号</th>
+              <th>手机号</th>
+              <th>货架位</th>
+              <th>入库时间</th>
+              <th>在库时长</th>
+              <th>状态</th>
+              <th>催收次数</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="allTable">
+            <tr><td colspan="8" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="handleModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+      <div style="background: #fff; padding: 25px; border-radius: 8px; width: 400px; max-width: 90%;">
+        <h3 style="margin-bottom: 15px;">处理异常件</h3>
+        <div class="form-group">
+          <label>运单号</label>
+          <input type="text" id="handleTracking" readonly style="background: #f5f5f5;">
+        </div>
+        <div class="form-group">
+          <label>处理备注</label>
+          <textarea id="handleNote" rows="3" placeholder="请输入处理备注，如：联系收件人退回、转存仓库等"></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button class="btn btn-secondary" style="flex: 1;" onclick="closeHandleModal()">取消</button>
+          <button class="btn btn-primary" style="flex: 1;" onclick="submitHandle()">确认处理</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentTab = 'overdue';
+    let currentHandleId = null;
+
+    function switchTab(tab) {
+      currentTab = tab;
+      
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+
+      document.getElementById('overduePanel').style.display = tab === 'overdue' ? 'block' : 'none';
+      document.getElementById('abnormalPanel').style.display = tab === 'abnormal' ? 'block' : 'none';
+      document.getElementById('allPanel').style.display = tab === 'all' ? 'block' : 'none';
+
+      loadData();
+    }
+
+    function loadStats() {
+      fetch('/api/stats')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('inStock').textContent = data.data.inStock;
+            document.getElementById('overdueCount').textContent = data.data.overdue;
+            document.getElementById('abnormalCount').textContent = data.data.abnormal;
+          }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function loadData() {
+      loadStats();
+
+      if (currentTab === 'overdue') {
+        loadOverduePackages();
+      } else if (currentTab === 'abnormal') {
+        loadAbnormalPackages();
+      } else {
+        loadAllPackages();
+      }
+    }
+
+    function loadOverduePackages() {
+      fetch('/api/packages/overdue/list')
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('overdueTable');
+          if (data.success && data.data.length > 0) {
+            tbody.innerHTML = data.data.map(pkg => {
+              const hours = getHoursDiff(pkg.in_time);
+              return `
+                <tr>
+                  <td>${pkg.tracking_number}</td>
+                  <td>${pkg.recipient_phone}</td>
+                  <td><span class="badge badge-in-stock">${pkg.shelf_code || '-'}</span></td>
+                  <td>${formatTime(pkg.in_time)}</td>
+                  <td style="color: #e74c3c; font-weight: 600;">${formatDuration(hours)}</td>
+                  <td>${pkg.reminder_count || 0} 次</td>
+                  <td>${pkg.last_reminder_time ? formatTime(pkg.last_reminder_time) : '-'}</td>
+                  <td>
+                    <button class="btn btn-warning btn-sm" onclick="sendReminder(${pkg.id})">发送催收</button>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+          } else {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999; padding: 20px;">暂无逾期件</td></tr>';
+          }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function loadAbnormalPackages() {
+      fetch('/api/packages/abnormal/list')
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('abnormalTable');
+          if (data.success && data.data.length > 0) {
+            tbody.innerHTML = data.data.map(pkg => {
+              const hours = getHoursDiff(pkg.in_time);
+              return `
+                <tr>
+                  <td>${pkg.tracking_number}</td>
+                  <td>${pkg.recipient_phone}</td>
+                  <td><span class="badge badge-in-stock">${pkg.shelf_code || '-'}</span></td>
+                  <td>${formatTime(pkg.in_time)}</td>
+                  <td style="color: #9b59b6; font-weight: 600;">${formatDuration(hours)}</td>
+                  <td>${pkg.reminder_count || 0} 次</td>
+                  <td><span class="badge badge-abnormal">异常</span></td>
+                  <td>
+                    <button class="btn btn-primary btn-sm" onclick="openHandleModal(${pkg.id}, '${pkg.tracking_number}')">处理</button>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+          } else {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999; padding: 20px;">暂无异常件</td></tr>';
+          }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function loadAllPackages() {
+      fetch('/api/packages?status=in_stock&limit=100')
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('allTable');
+          if (data.success && data.data.length > 0) {
+            tbody.innerHTML = data.data.map(pkg => {
+              const hours = getHoursDiff(pkg.in_time);
+              return `
+                <tr>
+                  <td>${pkg.tracking_number}</td>
+                  <td>${pkg.recipient_phone}</td>
+                  <td><span class="badge badge-in-stock">${pkg.shelf_code || '-'}</span></td>
+                  <td>${formatTime(pkg.in_time)}</td>
+                  <td>${formatDuration(hours)}</td>
+                  <td>${getStatusBadge(pkg.status)}</td>
+                  <td>${pkg.reminder_count || 0} 次</td>
+                  <td>
+                    ${pkg.status === 'in_stock' || pkg.status === 'overdue' ? 
+                      `<button class="btn btn-warning btn-sm" onclick="sendReminder(${pkg.id})">催收</button>` : 
+                      '<button class="btn btn-primary btn-sm" onclick="openHandleModal(' + pkg.id + ', \'' + pkg.tracking_number + '\')">处理</button>'
+                    }
+                  </td>
+                </tr>
+              `;
+            }).join('');
+          } else {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999; padding: 20px;">暂无在库快递</td></tr>';
+          }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function sendReminder(packageId) {
+      if (!confirm('确定要发送催收通知吗？')) return;
+
+      fetch(`/api/notifications/send-reminder/${packageId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('催收通知已发送！');
+          loadData();
+        } else {
+          alert(data.error || '发送失败');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('发送失败');
+      });
+    }
+
+    function sendAllReminders() {
+      if (!confirm('确定要对所有逾期件发送催收通知吗？')) return;
+
+      fetch('/api/packages/overdue/list')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data.length > 0) {
+            let count = 0;
+            const packages = data.data;
+            
+            packages.forEach((pkg, index) => {
+              setTimeout(() => {
+                fetch(`/api/notifications/send-reminder/${pkg.id}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' }
+                }).then(() => {
+                  count++;
+                  if (count === packages.length) {
+                    alert(`已向 ${count} 个逾期件发送催收通知！`);
+                    loadData();
+                  }
+                });
+              }, index * 200);
+            });
+          } else {
+            alert('暂无逾期件需要催收');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('操作失败');
+        });
+    }
+
+    function openHandleModal(packageId, trackingNumber) {
+      currentHandleId = packageId;
+      document.getElementById('handleTracking').value = trackingNumber;
+      document.getElementById('handleNote').value = '';
+      document.getElementById('handleModal').style.display = 'flex';
+    }
+
+    function closeHandleModal() {
+      currentHandleId = null;
+      document.getElementById('handleModal').style.display = 'none';
+    }
+
+    function submitHandle() {
+      const note = document.getElementById('handleNote').value.trim();
+      if (!note) {
+        alert('请输入处理备注');
+        return;
+      }
+
+      fetch(`/api/packages/abnormal/${currentHandleId}/handle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('处理完成！');
+          closeHandleModal();
+          loadData();
+        } else {
+          alert(data.error || '处理失败');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('处理失败');
+      });
+    }
+
+    function getHoursDiff(timeStr) {
+      const diff = Date.now() - new Date(timeStr).getTime();
+      return Math.floor(diff / (1000 * 60 * 60));
+    }
+
+    function formatDuration(hours) {
+      if (hours < 24) {
+        return `${hours} 小时`;
+      }
+      const days = Math.floor(hours / 24);
+      const remainingHours = hours % 24;
+      return `${days} 天 ${remainingHours} 小时`;
+    }
+
+    function getStatusBadge(status) {
+      const statusMap = {
+        'in_stock': { text: '在库', class: 'badge-in-stock' },
+        'picked': { text: '已取件', class: 'badge-picked' },
+        'overdue': { text: '逾期', class: 'badge-overdue' },
+        'abnormal': { text: '异常', class: 'badge-abnormal' }
+      };
+      const s = statusMap[status] || { text: status, class: '' };
+      return `<span class="badge ${s.class}">${s.text}</span>`;
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return '-';
+      const d = new Date(timeStr);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    loadData();
+    setInterval(loadData, 60000);
+  </script>
+</body>
+</html>
