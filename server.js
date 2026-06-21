@@ -23,6 +23,14 @@ const {
   getStats,
   handleAbnormalPackage,
   getPackageById,
+  createReturnOrder,
+  getReturnOrderById,
+  updateReturnOrder,
+  deleteReturnOrder,
+  getReturnOrders,
+  reconcileReturnOrder,
+  reconcileAllReturnOrders,
+  getReturnOrderStats,
 } = require('./db');
 
 const dataDir = path.join(__dirname, 'data');
@@ -307,6 +315,198 @@ app.post('/api/packages/abnormal/:packageId/handle', (req, res) => {
     const { note } = req.body;
     handleAbnormalPackage(req.params.packageId, note);
     res.json({ success: true, message: '异常件已处理' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const MAX_RETURN_TRACKING_LENGTH = 50;
+const MAX_PLATFORM_ORDER_LENGTH = 50;
+const MAX_BUYER_PHONE_LENGTH = 20;
+const MAX_RETURN_REMARK_LENGTH = 200;
+
+app.get('/api/return-orders', (req, res) => {
+  try {
+    const { platform = 'all', reconcileStatus = 'all', keyword = '' } = req.query;
+    const orders = getReturnOrders({ platform, reconcileStatus, keyword });
+    res.json({ success: true, data: orders });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/return-orders/stats', (req, res) => {
+  try {
+    const stats = getReturnOrderStats();
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/return-orders/:id', (req, res) => {
+  try {
+    const order = getReturnOrderById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, error: '未找到该退货单' });
+    }
+    res.json({ success: true, data: order });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/return-orders', (req, res) => {
+  try {
+    let {
+      platform,
+      platformOrderNo,
+      returnTrackingNumber,
+      buyerPhone,
+      refundStatus,
+      shipStatus,
+      amount,
+      remark
+    } = req.body;
+
+    platformOrderNo = platformOrderNo ? String(platformOrderNo).trim() : '';
+    returnTrackingNumber = returnTrackingNumber ? String(returnTrackingNumber).trim() : '';
+    buyerPhone = buyerPhone ? String(buyerPhone).trim() : '';
+    remark = remark ? String(remark).trim() : '';
+
+    if (!platformOrderNo) {
+      return res.status(400).json({ error: '平台订单号不能为空' });
+    }
+    if (platformOrderNo.length > MAX_PLATFORM_ORDER_LENGTH) {
+      return res.status(400).json({ error: `平台订单号长度不能超过 ${MAX_PLATFORM_ORDER_LENGTH} 个字符` });
+    }
+    if (returnTrackingNumber.length > MAX_RETURN_TRACKING_LENGTH) {
+      return res.status(400).json({ error: `退货单号长度不能超过 ${MAX_RETURN_TRACKING_LENGTH} 个字符` });
+    }
+    if (buyerPhone.length > MAX_BUYER_PHONE_LENGTH) {
+      return res.status(400).json({ error: `买家手机号长度不能超过 ${MAX_BUYER_PHONE_LENGTH} 个字符` });
+    }
+    if (remark.length > MAX_RETURN_REMARK_LENGTH) {
+      return res.status(400).json({ error: `备注长度不能超过 ${MAX_RETURN_REMARK_LENGTH} 个字符` });
+    }
+
+    const parsedAmount = amount !== undefined && amount !== null && amount !== ''
+      ? parseFloat(amount)
+      : 0;
+    if (isNaN(parsedAmount) || parsedAmount < 0) {
+      return res.status(400).json({ error: '退款金额格式不正确' });
+    }
+
+    const order = createReturnOrder({
+      platform,
+      platformOrderNo,
+      returnTrackingNumber,
+      buyerPhone,
+      refundStatus,
+      shipStatus,
+      amount: parsedAmount,
+      remark
+    });
+
+    res.json({
+      success: true,
+      data: order,
+      message: '退货单录入成功，已完成自动对账'
+    });
+  } catch (error) {
+    console.error('退货单录入失败:', error);
+    res.status(500).json({ error: error.message || '退货单录入失败' });
+  }
+});
+
+app.put('/api/return-orders/:id', (req, res) => {
+  try {
+    const existing = getReturnOrderById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ error: '未找到该退货单' });
+    }
+
+    const data = { ...req.body };
+
+    if (data.platformOrderNo !== undefined) {
+      data.platformOrderNo = String(data.platformOrderNo).trim();
+      if (!data.platformOrderNo) {
+        return res.status(400).json({ error: '平台订单号不能为空' });
+      }
+      if (data.platformOrderNo.length > MAX_PLATFORM_ORDER_LENGTH) {
+        return res.status(400).json({ error: `平台订单号长度不能超过 ${MAX_PLATFORM_ORDER_LENGTH} 个字符` });
+      }
+    }
+    if (data.returnTrackingNumber !== undefined) {
+      data.returnTrackingNumber = String(data.returnTrackingNumber).trim();
+      if (data.returnTrackingNumber.length > MAX_RETURN_TRACKING_LENGTH) {
+        return res.status(400).json({ error: `退货单号长度不能超过 ${MAX_RETURN_TRACKING_LENGTH} 个字符` });
+      }
+    }
+    if (data.buyerPhone !== undefined) {
+      data.buyerPhone = String(data.buyerPhone).trim();
+      if (data.buyerPhone.length > MAX_BUYER_PHONE_LENGTH) {
+        return res.status(400).json({ error: `买家手机号长度不能超过 ${MAX_BUYER_PHONE_LENGTH} 个字符` });
+      }
+    }
+    if (data.remark !== undefined) {
+      data.remark = String(data.remark).trim().slice(0, MAX_RETURN_REMARK_LENGTH);
+    }
+    if (data.amount !== undefined && data.amount !== null && data.amount !== '') {
+      data.amount = parseFloat(data.amount);
+      if (isNaN(data.amount) || data.amount < 0) {
+        return res.status(400).json({ error: '退款金额格式不正确' });
+      }
+    }
+
+    const order = updateReturnOrder(req.params.id, data);
+    res.json({
+      success: true,
+      data: order,
+      message: '退货单已更新，已完成自动对账'
+    });
+  } catch (error) {
+    console.error('退货单更新失败:', error);
+    res.status(500).json({ error: error.message || '退货单更新失败' });
+  }
+});
+
+app.delete('/api/return-orders/:id', (req, res) => {
+  try {
+    const result = deleteReturnOrder(req.params.id);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: '未找到该退货单' });
+    }
+    res.json({ success: true, message: '退货单已删除' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/return-orders/:id/reconcile', (req, res) => {
+  try {
+    const order = reconcileReturnOrder(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: '未找到该退货单' });
+    }
+    res.json({
+      success: true,
+      data: order,
+      message: '对账完成'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/return-orders/reconcile', (req, res) => {
+  try {
+    const summary = reconcileAllReturnOrders();
+    res.json({
+      success: true,
+      data: summary,
+      message: `批量对账完成，共处理 ${summary.total} 单`
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -517,3 +517,106 @@ table tr:hover {
   margin-bottom: 10px;
   opacity: 0.5;
 }
+
+.badge-platform-pdd {
+  background: #ffe0e6;
+  color: #c4001d;
+}
+
+.badge-platform-tb {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.badge-refunded {
+  background: #d4efdf;
+  color: #1e8449;
+}
+
+.badge-refunding {
+  background: #fdebd0;
+  color: #7e5109;
+}
+
+.badge-not-refunded {
+  background: #eceff1;
+  color: #455a64;
+}
+
+.badge-shipped {
+  background: #d6eaf8;
+  color: #1a5276;
+}
+
+.badge-not-shipped {
+  background: #eceff1;
+  color: #455a64;
+}
+
+.badge-reconcile-matched {
+  background: #d4efdf;
+  color: #1e8449;
+}
+
+.badge-reconcile-refunded-not-shipped {
+  background: #fadbd8;
+  color: #922b21;
+}
+
+.badge-reconcile-shipped-not-refunded {
+  background: #fdebd0;
+  color: #7e5109;
+}
+
+.badge-reconcile-pending {
+  background: #eaf2f8;
+  color: #2874a6;
+}
+
+.stat-card.reconcile-matched .stat-value { color: #27ae60; }
+.stat-card.reconcile-refunded-not-shipped .stat-value { color: #e74c3c; }
+.stat-card.reconcile-shipped-not-refunded .stat-value { color: #e67e22; }
+.stat-card.reconcile-pending .stat-value { color: #3498db; }
+
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  transition: border-color 0.3s;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.filter-bar select,
+.filter-bar input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.filter-bar label {
+  font-size: 13px;
+  color: #7f8c8d;
+  margin-right: 4px;
+}
+
+.amount-cell {
+  font-weight: 600;
+  color: #e74c3c;
+}

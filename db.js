@@ -8,10 +8,12 @@ let db = {
   shelves: [],
   packages: [],
   notifications: [],
+  returnOrders: [],
   nextIds: {
     shelves: 1,
     packages: 1,
-    notifications: 1
+    notifications: 1,
+    returnOrders: 1
   }
 };
 
@@ -24,6 +26,15 @@ function loadDb() {
       console.error('加载数据库失败:', e.message);
     }
   }
+  if (!db.shelves) db.shelves = [];
+  if (!db.packages) db.packages = [];
+  if (!db.notifications) db.notifications = [];
+  if (!db.returnOrders) db.returnOrders = [];
+  if (!db.nextIds) db.nextIds = {};
+  if (typeof db.nextIds.shelves !== 'number') db.nextIds.shelves = 1;
+  if (typeof db.nextIds.packages !== 'number') db.nextIds.packages = 1;
+  if (typeof db.nextIds.notifications !== 'number') db.nextIds.notifications = 1;
+  if (typeof db.nextIds.returnOrders !== 'number') db.nextIds.returnOrders = 1;
 }
 
 function saveDb() {
@@ -278,6 +289,183 @@ function handleAbnormalPackage(packageId, note) {
   return { changes: pkg ? 1 : 0 };
 }
 
+const VALID_PLATFORMS = ['pinduoduo', 'taobao'];
+const VALID_REFUND_STATUSES = ['refunded', 'refunding', 'not_refunded'];
+const VALID_SHIP_STATUSES = ['shipped', 'not_shipped'];
+
+function computeReconcileStatus(order) {
+  const refunded = order.refund_status === 'refunded';
+  const shipped = order.ship_status === 'shipped' && !!order.return_tracking_number;
+
+  if (refunded && shipped) return 'matched';
+  if (refunded && !shipped) return 'refunded_not_shipped';
+  if (!refunded && shipped) return 'shipped_not_refunded';
+  return 'pending';
+}
+
+function getReturnOrderById(id) {
+  return db.returnOrders.find(o => o.id === parseInt(id)) || null;
+}
+
+function createReturnOrder(data) {
+  const {
+    platform,
+    platformOrderNo,
+    returnTrackingNumber,
+    buyerPhone,
+    refundStatus,
+    refundTime,
+    shipStatus,
+    shipTime,
+    amount,
+    remark
+  } = data;
+
+  const now = new Date().toISOString();
+  const order = {
+    id: db.nextIds.returnOrders++,
+    platform: VALID_PLATFORMS.includes(platform) ? platform : 'pinduoduo',
+    platform_order_no: (platformOrderNo || '').trim(),
+    return_tracking_number: (returnTrackingNumber || '').trim(),
+    buyer_phone: (buyerPhone || '').trim(),
+    refund_status: VALID_REFUND_STATUSES.includes(refundStatus) ? refundStatus : 'not_refunded',
+    refund_time: refundTime || null,
+    ship_status: VALID_SHIP_STATUSES.includes(shipStatus) ? shipStatus : 'not_shipped',
+    ship_time: shipTime || null,
+    amount: typeof amount === 'number' && amount >= 0 ? amount : 0,
+    remark: remark || '',
+    reconcile_status: 'pending',
+    reconcile_time: null,
+    created_at: now,
+    updated_at: now
+  };
+
+  order.reconcile_status = computeReconcileStatus(order);
+
+  db.returnOrders.push(order);
+  saveDb();
+  return getReturnOrderById(order.id);
+}
+
+function updateReturnOrder(id, data) {
+  const order = getReturnOrderById(id);
+  if (!order) return null;
+
+  if (data.platform !== undefined && VALID_PLATFORMS.includes(data.platform)) {
+    order.platform = data.platform;
+  }
+  if (data.platformOrderNo !== undefined) {
+    order.platform_order_no = String(data.platformOrderNo).trim();
+  }
+  if (data.returnTrackingNumber !== undefined) {
+    order.return_tracking_number = String(data.returnTrackingNumber).trim();
+  }
+  if (data.buyerPhone !== undefined) {
+    order.buyer_phone = String(data.buyerPhone).trim();
+  }
+  if (data.refundStatus !== undefined && VALID_REFUND_STATUSES.includes(data.refundStatus)) {
+    order.refund_status = data.refundStatus;
+    order.refund_time = data.refundStatus === 'refunded'
+      ? (data.refundTime || new Date().toISOString())
+      : null;
+  }
+  if (data.shipStatus !== undefined && VALID_SHIP_STATUSES.includes(data.shipStatus)) {
+    order.ship_status = data.shipStatus;
+    order.ship_time = data.shipStatus === 'shipped'
+      ? (data.shipTime || new Date().toISOString())
+      : null;
+  }
+  if (data.amount !== undefined) {
+    order.amount = typeof data.amount === 'number' && data.amount >= 0 ? data.amount : 0;
+  }
+  if (data.remark !== undefined) {
+    order.remark = String(data.remark || '');
+  }
+
+  order.reconcile_status = computeReconcileStatus(order);
+  order.reconcile_time = new Date().toISOString();
+  order.updated_at = new Date().toISOString();
+
+  saveDb();
+  return getReturnOrderById(order.id);
+}
+
+function deleteReturnOrder(id) {
+  const idx = db.returnOrders.findIndex(o => o.id === parseInt(id));
+  if (idx === -1) return { changes: 0 };
+  db.returnOrders.splice(idx, 1);
+  saveDb();
+  return { changes: 1 };
+}
+
+function getReturnOrders(filters = {}) {
+  const { platform, reconcileStatus, keyword } = filters;
+  let list = [...db.returnOrders];
+
+  if (platform && platform !== 'all') {
+    list = list.filter(o => o.platform === platform);
+  }
+  if (reconcileStatus && reconcileStatus !== 'all') {
+    list = list.filter(o => o.reconcile_status === reconcileStatus);
+  }
+  if (keyword) {
+    const kw = String(keyword).toLowerCase().trim();
+    list = list.filter(o =>
+      (o.platform_order_no || '').toLowerCase().includes(kw) ||
+      (o.return_tracking_number || '').toLowerCase().includes(kw) ||
+      (o.buyer_phone || '').toLowerCase().includes(kw)
+    );
+  }
+
+  return list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+function reconcileReturnOrder(id) {
+  const order = getReturnOrderById(id);
+  if (!order) return null;
+  order.reconcile_status = computeReconcileStatus(order);
+  order.reconcile_time = new Date().toISOString();
+  order.updated_at = order.reconcile_time;
+  saveDb();
+  return getReturnOrderById(order.id);
+}
+
+function reconcileAllReturnOrders() {
+  const summary = {
+    total: db.returnOrders.length,
+    matched: 0,
+    refunded_not_shipped: 0,
+    shipped_not_refunded: 0,
+    pending: 0
+  };
+  const now = new Date().toISOString();
+
+  for (const order of db.returnOrders) {
+    order.reconcile_status = computeReconcileStatus(order);
+    order.reconcile_time = now;
+    order.updated_at = now;
+    summary[order.reconcile_status] = (summary[order.reconcile_status] || 0) + 1;
+  }
+
+  saveDb();
+  return summary;
+}
+
+function getReturnOrderStats() {
+  const summary = {
+    total: db.returnOrders.length,
+    matched: 0,
+    refunded_not_shipped: 0,
+    shipped_not_refunded: 0,
+    pending: 0
+  };
+  for (const order of db.returnOrders) {
+    const status = computeReconcileStatus(order);
+    summary[status] = (summary[status] || 0) + 1;
+  }
+  return summary;
+}
+
 module.exports = {
   initDatabase,
   findNearestEmptyShelf,
@@ -298,4 +486,12 @@ module.exports = {
   getNotifications,
   getStats,
   handleAbnormalPackage,
+  createReturnOrder,
+  getReturnOrderById,
+  updateReturnOrder,
+  deleteReturnOrder,
+  getReturnOrders,
+  reconcileReturnOrder,
+  reconcileAllReturnOrders,
+  getReturnOrderStats,
 };

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>退货对账 - 快递代收点管理系统</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">📦 快递<span>代收点</span></div>
+    <nav>
+      <a href="/">🏠 入库扫描</a>
+      <a href="/outbound.html">📤 出库核销</a>
+      <a href="/overdue.html">⏰ 滞留件管理</a>
+      <a href="/shelves.html">🗄️ 货架状态</a>
+      <a href="/notifications.html">📱 通知记录</a>
+      <a href="/reconcile.html" class="active">🔄 退货对账</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>拼多多 / 淘宝退货对账</h1>
+      <p>将寄件退货单号与电商平台退款状态自动对账，标记已退款未寄出 / 已寄出未退款等差异项</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card reconcile-matched">
+        <div class="stat-label">对账一致</div>
+        <div class="stat-value" id="statMatched">0</div>
+      </div>
+      <div class="stat-card reconcile-refunded-not-shipped">
+        <div class="stat-label">已退款未寄出</div>
+        <div class="stat-value" id="statRefundedNotShipped">0</div>
+      </div>
+      <div class="stat-card reconcile-shipped-not-refunded">
+        <div class="stat-label">已寄出未退款</div>
+        <div class="stat-value" id="statShippedNotRefunded">0</div>
+      </div>
+      <div class="stat-card reconcile-pending">
+        <div class="stat-label">处理中</div>
+        <div class="stat-value" id="statPending">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">退货单总数</div>
+        <div class="stat-value" id="statTotal">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>➕ 录入退货单</h2>
+      <form id="addForm">
+        <div class="two-col">
+          <div class="form-group">
+            <label for="platform">电商平台 *</label>
+            <select id="platform" name="platform">
+              <option value="pinduoduo">拼多多</option>
+              <option value="taobao">淘宝</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="platformOrderNo">平台订单号 *</label>
+            <input type="text" id="platformOrderNo" name="platformOrderNo" placeholder="如：PDD20260621001" required maxlength="50">
+          </div>
+          <div class="form-group">
+            <label for="returnTrackingNumber">寄件退货单号</label>
+            <input type="text" id="returnTrackingNumber" name="returnTrackingNumber" placeholder="退货寄出运单号（未寄出留空）" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label for="buyerPhone">买家手机号</label>
+            <input type="tel" id="buyerPhone" name="buyerPhone" placeholder="买家手机号" maxlength="20">
+          </div>
+          <div class="form-group">
+            <label for="refundStatus">退款状态（平台）</label>
+            <select id="refundStatus" name="refundStatus">
+              <option value="not_refunded">未退款</option>
+              <option value="refunding">退款中</option>
+              <option value="refunded">已退款</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="shipStatus">寄出状态</label>
+            <select id="shipStatus" name="shipStatus">
+              <option value="not_shipped">未寄出</option>
+              <option value="shipped">已寄出</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="amount">退款金额（元）</label>
+            <input type="number" id="amount" name="amount" placeholder="0.00" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label for="remark">备注</label>
+            <input type="text" id="remark" name="remark" placeholder="选填" maxlength="200">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 16px; padding: 12px;">
+          📥 录入并自动对账
+        </button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>📋 退货对账列表</h2>
+      <div class="filter-bar">
+        <label>平台</label>
+        <select id="filterPlatform" onchange="loadOrders()">
+          <option value="all">全部</option>
+          <option value="pinduoduo">拼多多</option>
+          <option value="taobao">淘宝</option>
+        </select>
+        <label>对账状态</label>
+        <select id="filterStatus" onchange="loadOrders()">
+          <option value="all">全部</option>
+          <option value="refunded_not_shipped">已退款未寄出</option>
+          <option value="shipped_not_refunded">已寄出未退款</option>
+          <option value="matched">对账一致</option>
+          <option value="pending">处理中</option>
+        </select>
+        <input type="text" id="filterKeyword" placeholder="订单号 / 退货单号 / 手机号" onkeypress="if(event.key==='Enter') loadOrders()">
+        <button class="btn btn-primary btn-sm" onclick="loadOrders()">🔍 查询</button>
+        <button class="btn btn-warning btn-sm" onclick="reconcileAll()">🔄 一键对账</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>平台</th>
+            <th>平台订单号</th>
+            <th>寄件退货单号</th>
+            <th>买家手机</th>
+            <th>退款状态</th>
+            <th>寄出状态</th>
+            <th>退款金额</th>
+            <th>对账状态</th>
+            <th>最后对账</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="ordersTable">
+          <tr><td colspan="10" style="text-align: center; color: #999; padding: 20px;">加载中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+      <div style="background: #fff; padding: 25px; border-radius: 8px; width: 520px; max-width: 92%; max-height: 90vh; overflow-y: auto;">
+        <h3 style="margin-bottom: 15px;">编辑退货单</h3>
+        <input type="hidden" id="editId">
+        <div class="two-col">
+          <div class="form-group">
+            <label>电商平台</label>
+            <select id="editPlatform">
+              <option value="pinduoduo">拼多多</option>
+              <option value="taobao">淘宝</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>平台订单号 *</label>
+            <input type="text" id="editPlatformOrderNo" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label>寄件退货单号</label>
+            <input type="text" id="editReturnTrackingNumber" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label>买家手机号</label>
+            <input type="tel" id="editBuyerPhone" maxlength="20">
+          </div>
+          <div class="form-group">
+            <label>退款状态（平台）</label>
+            <select id="editRefundStatus">
+              <option value="not_refunded">未退款</option>
+              <option value="refunding">退款中</option>
+              <option value="refunded">已退款</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>寄出状态</label>
+            <select id="editShipStatus">
+              <option value="not_shipped">未寄出</option>
+              <option value="shipped">已寄出</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>退款金额（元）</label>
+            <input type="number" id="editAmount" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <input type="text" id="editRemark" maxlength="200">
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button class="btn btn-secondary" style="flex: 1;" onclick="closeEditModal()">取消</button>
+          <button class="btn btn-primary" style="flex: 1;" onclick="submitEdit()">保存并对账</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentFilters = { platform: 'all', reconcileStatus: 'all', keyword: '' };
+
+    function loadStats() {
+      fetch('/api/return-orders/stats')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const s = data.data;
+            document.getElementById('statMatched').textContent = s.matched || 0;
+            document.getElementById('statRefundedNotShipped').textContent = s.refunded_not_shipped || 0;
+            document.getElementById('statShippedNotRefunded').textContent = s.shipped_not_refunded || 0;
+            document.getElementById('statPending').textContent = s.pending || 0;
+            document.getElementById('statTotal').textContent = s.total || 0;
+          }
+        })
+        .catch(err => console.error('加载对账统计失败:', err));
+    }
+
+    function loadOrders() {
+      currentFilters.platform = document.getElementById('filterPlatform').value;
+      currentFilters.reconcileStatus = document.getElementById('filterStatus').value;
+      currentFilters.keyword = document.getElementById('filterKeyword').value.trim();
+
+      const params = new URLSearchParams({
+        platform: currentFilters.platform,
+        reconcileStatus: currentFilters.reconcileStatus,
+        keyword: currentFilters.keyword
+      });
+
+      fetch('/api/return-orders?' + params.toString())
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('ordersTable');
+          if (data.success && data.data.length > 0) {
+            tbody.innerHTML = data.data.map(o => `
+              <tr>
+                <td>${getPlatformBadge(o.platform)}</td>
+                <td>${escapeHtml(o.platform_order_no)}</td>
+                <td>${o.return_tracking_number ? escapeHtml(o.return_tracking_number) : '<span style="color:#bbb;">未寄出</span>'}</td>
+                <td>${escapeHtml(o.buyer_phone) || '-'}</td>
+                <td>${getRefundBadge(o.refund_status)}</td>
+                <td>${getShipBadge(o.ship_status)}</td>
+                <td class="amount-cell">${o.amount > 0 ? '¥' + Number(o.amount).toFixed(2) : '-'}</td>
+                <td>${getReconcileBadge(o.reconcile_status)}</td>
+                <td>${o.reconcile_time ? formatTime(o.reconcile_time) : '-'}</td>
+                <td>
+                  <button class="btn btn-primary btn-sm" onclick="openEditModal(${o.id})">编辑</button>
+                  <button class="btn btn-secondary btn-sm" onclick="reconcileOne(${o.id})">对账</button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteOrder(${o.id})">删除</button>
+                </td>
+              </tr>
+            `).join('');
+          } else {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #999; padding: 20px;">暂无退货单记录</td></tr>';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('ordersTable').innerHTML = '<tr><td colspan="10" style="text-align: center; color: #e74c3c; padding: 20px;">加载失败</td></tr>';
+        });
+    }
+
+    document.getElementById('addForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const payload = {
+        platform: document.getElementById('platform').value,
+        platformOrderNo: document.getElementById('platformOrderNo').value.trim(),
+        returnTrackingNumber: document.getElementById('returnTrackingNumber').value.trim(),
+        buyerPhone: document.getElementById('buyerPhone').value.trim(),
+        refundStatus: document.getElementById('refundStatus').value,
+        shipStatus: document.getElementById('shipStatus').value,
+        amount: document.getElementById('amount').value,
+        remark: document.getElementById('remark').value.trim()
+      };
+
+      if (!payload.platformOrderNo) {
+        alert('请输入平台订单号');
+        return;
+      }
+
+      fetch('/api/return-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('录入成功！对账状态：' + getReconcileText(data.data.reconcile_status));
+          document.getElementById('addForm').reset();
+          loadStats();
+          loadOrders();
+        } else {
+          alert(data.error || '录入失败');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('网络错误，请重试');
+      });
+    });
+
+    function openEditModal(id) {
+      fetch(`/api/return-orders/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) {
+            alert(data.error || '加载失败');
+            return;
+          }
+          const o = data.data;
+          document.getElementById('editId').value = o.id;
+          document.getElementById('editPlatform').value = o.platform;
+          document.getElementById('editPlatformOrderNo').value = o.platform_order_no || '';
+          document.getElementById('editReturnTrackingNumber').value = o.return_tracking_number || '';
+          document.getElementById('editBuyerPhone').value = o.buyer_phone || '';
+          document.getElementById('editRefundStatus').value = o.refund_status;
+          document.getElementById('editShipStatus').value = o.ship_status;
+          document.getElementById('editAmount').value = o.amount || '';
+          document.getElementById('editRemark').value = o.remark || '';
+          document.getElementById('editModal').style.display = 'flex';
+        })
+        .catch(err => {
+          console.error(err);
+          alert('加载失败');
+        });
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    function submitEdit() {
+      const id = document.getElementById('editId').value;
+      const payload = {
+        platform: document.getElementById('editPlatform').value,
+        platformOrderNo: document.getElementById('editPlatformOrderNo').value.trim(),
+        returnTrackingNumber: document.getElementById('editReturnTrackingNumber').value.trim(),
+        buyerPhone: document.getElementById('editBuyerPhone').value.trim(),
+        refundStatus: document.getElementById('editRefundStatus').value,
+        shipStatus: document.getElementById('editShipStatus').value,
+        amount: document.getElementById('editAmount').value,
+        remark: document.getElementById('editRemark').value.trim()
+      };
+
+      if (!payload.platformOrderNo) {
+        alert('平台订单号不能为空');
+        return;
+      }
+
+      fetch(`/api/return-orders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('保存成功！对账状态：' + getReconcileText(data.data.reconcile_status));
+          closeEditModal();
+          loadStats();
+          loadOrders();
+        } else {
+          alert(data.error || '保存失败');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('网络错误，请重试');
+      });
+    }
+
+    function deleteOrder(id) {
+      if (!confirm('确定要删除该退货单吗？')) return;
+      fetch(`/api/return-orders/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert('已删除');
+            loadStats();
+            loadOrders();
+          } else {
+            alert(data.error || '删除失败');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('删除失败');
+        });
+    }
+
+    function reconcileOne(id) {
+      fetch(`/api/return-orders/${id}/reconcile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('对账完成：' + getReconcileText(data.data.reconcile_status));
+          loadStats();
+          loadOrders();
+        } else {
+          alert(data.error || '对账失败');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('对账失败');
+      });
+    }
+
+    function reconcileAll() {
+      if (!confirm('确定要批量执行对账吗？将重新核对所有退货单。')) return;
+      fetch('/api/return-orders/reconcile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const s = data.data;
+          alert(`批量对账完成，共 ${s.total} 单\n对账一致：${s.matched}\n已退款未寄出：${s.refunded_not_shipped}\n已寄出未退款：${s.shipped_not_refunded}\n处理中：${s.pending}`);
+          loadStats();
+          loadOrders();
+        } else {
+          alert(data.error || '对账失败');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('对账失败');
+      });
+    }
+
+    function getPlatformBadge(platform) {
+      if (platform === 'pinduoduo') return '<span class="badge badge-platform-pdd">拼多多</span>';
+      if (platform === 'taobao') return '<span class="badge badge-platform-tb">淘宝</span>';
+      return '<span class="badge">' + escapeHtml(platform) + '</span>';
+    }
+
+    function getRefundBadge(status) {
+      const map = {
+        'refunded': { text: '已退款', class: 'badge-refunded' },
+        'refunding': { text: '退款中', class: 'badge-refunding' },
+        'not_refunded': { text: '未退款', class: 'badge-not-refunded' }
+      };
+      const s = map[status] || { text: status, class: '' };
+      return `<span class="badge ${s.class}">${s.text}</span>`;
+    }
+
+    function getShipBadge(status) {
+      const map = {
+        'shipped': { text: '已寄出', class: 'badge-shipped' },
+        'not_shipped': { text: '未寄出', class: 'badge-not-shipped' }
+      };
+      const s = map[status] || { text: status, class: '' };
+      return `<span class="badge ${s.class}">${s.text}</span>`;
+    }
+
+    function getReconcileBadge(status) {
+      const map = {
+        'matched': { text: '对账一致', class: 'badge-reconcile-matched' },
+        'refunded_not_shipped': { text: '已退款未寄出', class: 'badge-reconcile-refunded-not-shipped' },
+        'shipped_not_refunded': { text: '已寄出未退款', class: 'badge-reconcile-shipped-not-refunded' },
+        'pending': { text: '处理中', class: 'badge-reconcile-pending' }
+      };
+      const s = map[status] || { text: status, class: '' };
+      return `<span class="badge ${s.class}">${s.text}</span>`;
+    }
+
+    function getReconcileText(status) {
+      const map = {
+        'matched': '对账一致',
+        'refunded_not_shipped': '已退款未寄出（差异项）',
+        'shipped_not_refunded': '已寄出未退款（差异项）',
+        'pending': '处理中'
+      };
+      return map[status] || status;
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return '-';
+      const d = new Date(timeStr);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    loadStats();
+    loadOrders();
+    setInterval(() => { loadStats(); }, 60000);
+  </script>
+</body>
+</html>
