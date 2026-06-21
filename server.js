@@ -57,12 +57,69 @@ function generateReminderContent(pkg, hours) {
   return `【快递代收点】温馨提醒：您的快递（运单号：${pkg.tracking_number}，货架位：${pkg.shelf_code}）已存放${hours}小时未取，请尽快取件，超7天将按异常件处理。`;
 }
 
+const MAX_TRACKING_LENGTH = 50;
+const MAX_PHONE_LENGTH = 20;
+const MAX_NAME_LENGTH = 50;
+
+function validateTrackingNumber(trackingNumber) {
+  if (!trackingNumber || typeof trackingNumber !== 'string') {
+    return '运单号不能为空';
+  }
+  if (trackingNumber.trim().length === 0) {
+    return '运单号不能为空';
+  }
+  if (trackingNumber.length > MAX_TRACKING_LENGTH) {
+    return `运单号长度不能超过 ${MAX_TRACKING_LENGTH} 个字符`;
+  }
+  return null;
+}
+
+function validatePhone(phone) {
+  if (!phone || typeof phone !== 'string') {
+    return '手机号不能为空';
+  }
+  if (phone.trim().length === 0) {
+    return '手机号不能为空';
+  }
+  if (phone.length > MAX_PHONE_LENGTH) {
+    return `手机号长度不能超过 ${MAX_PHONE_LENGTH} 个字符`;
+  }
+  return null;
+}
+
+app.get('/api/packages/tracking/:trackingNumber', (req, res) => {
+  try {
+    const { trackingNumber } = req.params;
+    const pkg = getPackageByTracking(trackingNumber);
+    if (!pkg) {
+      return res.status(404).json({ success: false, error: '未找到该快递' });
+    }
+    res.json({ success: true, data: pkg });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.post('/api/packages/scan-in', (req, res) => {
   try {
-    const { trackingNumber, recipientPhone, recipientName } = req.body;
+    let { trackingNumber, recipientPhone, recipientName } = req.body;
 
-    if (!trackingNumber || !recipientPhone) {
-      return res.status(400).json({ error: '运单号和手机号不能为空' });
+    trackingNumber = trackingNumber ? trackingNumber.trim() : '';
+    recipientPhone = recipientPhone ? recipientPhone.trim() : '';
+    recipientName = recipientName ? recipientName.trim() : '';
+
+    const trackingError = validateTrackingNumber(trackingNumber);
+    if (trackingError) {
+      return res.status(400).json({ error: trackingError });
+    }
+
+    const phoneError = validatePhone(recipientPhone);
+    if (phoneError) {
+      return res.status(400).json({ error: phoneError });
+    }
+
+    if (recipientName && recipientName.length > MAX_NAME_LENGTH) {
+      return res.status(400).json({ error: `姓名长度不能超过 ${MAX_NAME_LENGTH} 个字符` });
     }
 
     const existingPkg = getPackageByTracking(trackingNumber);
@@ -119,10 +176,12 @@ app.post('/api/packages/scan-in', (req, res) => {
 
 app.post('/api/packages/scan-out', (req, res) => {
   try {
-    const { trackingNumber, signature } = req.body;
+    let { trackingNumber, signature } = req.body;
+    trackingNumber = trackingNumber ? trackingNumber.trim() : '';
 
-    if (!trackingNumber) {
-      return res.status(400).json({ error: '运单号不能为空' });
+    const trackingError = validateTrackingNumber(trackingNumber);
+    if (trackingError) {
+      return res.status(400).json({ error: trackingError });
     }
 
     const pkg = pickupPackage(trackingNumber, signature || '');

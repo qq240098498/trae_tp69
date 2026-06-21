@@ -30,7 +30,7 @@
         <form id="scanOutForm">
           <div class="form-group">
             <label for="trackingNumber">运单号 *</label>
-            <input type="text" id="trackingNumber" name="trackingNumber" placeholder="扫描或输入运单号" required autofocus>
+            <input type="text" id="trackingNumber" name="trackingNumber" placeholder="扫描或输入运单号" required autofocus maxlength="50">
           </div>
           <button type="button" class="btn btn-primary" style="width: 100%;" onclick="queryPackage()">
             🔍 查询快递
@@ -215,20 +215,24 @@
         return;
       }
 
-      fetch(`/api/packages/search?keyword=${encodeURIComponent(trackingNumber)}`)
+      if (trackingNumber.length > 50) {
+        alert('运单号长度不能超过50个字符');
+        return;
+      }
+
+      fetch(`/api/packages/tracking/${encodeURIComponent(trackingNumber)}`)
         .then(res => res.json())
         .then(data => {
-          if (data.success && data.data.length > 0) {
-            const pkg = data.data.find(p => p.tracking_number === trackingNumber) || data.data[0];
-            showPackageInfo(pkg);
+          if (data.success && data.data) {
+            showPackageInfo(data.data);
           } else {
-            alert('未找到该快递');
+            alert('未找到该快递，请检查运单号是否正确');
             hidePackageInfo();
           }
         })
         .catch(err => {
           console.error(err);
-          alert('查询失败');
+          alert('查询失败，请检查网络');
         });
     }
 

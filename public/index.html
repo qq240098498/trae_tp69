@@ -53,15 +53,15 @@
         <form id="scanInForm">
           <div class="form-group">
             <label for="trackingNumber">运单号 *</label>
-            <input type="text" id="trackingNumber" name="trackingNumber" placeholder="扫描或输入运单号" required autofocus>
+            <input type="text" id="trackingNumber" name="trackingNumber" placeholder="扫描或输入运单号" required autofocus maxlength="50">
           </div>
           <div class="form-group">
             <label for="recipientPhone">收件人手机号 *</label>
-            <input type="tel" id="recipientPhone" name="recipientPhone" placeholder="输入收件人手机号" required>
+            <input type="tel" id="recipientPhone" name="recipientPhone" placeholder="输入收件人手机号" required maxlength="20">
           </div>
           <div class="form-group">
             <label for="recipientName">收件人姓名（选填）</label>
-            <input type="text" id="recipientName" name="recipientName" placeholder="输入收件人姓名">
+            <input type="text" id="recipientName" name="recipientName" placeholder="输入收件人姓名" maxlength="50">
           </div>
           <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 16px; padding: 12px;">
             📥 确认入库
@@ -131,6 +131,21 @@
 
       if (!trackingNumber || !recipientPhone) {
         showResultError('请填写运单号和手机号');
+        return;
+      }
+
+      if (trackingNumber.length > 50) {
+        showResultError('运单号长度不能超过50个字符');
+        return;
+      }
+
+      if (recipientPhone.length > 20) {
+        showResultError('手机号长度不能超过20个字符');
+        return;
+      }
+
+      if (recipientName && recipientName.length > 50) {
+        showResultError('姓名长度不能超过50个字符');
         return;
       }
 
