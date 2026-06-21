@@ -11,6 +11,7 @@ let db = {
   returnOrders: [],
   shelfActivity: [],
   bigItemWarnings: [],
+  config: {},
   nextIds: {
     shelves: 1,
     packages: 1,
@@ -36,6 +37,7 @@ function loadDb() {
   if (!db.returnOrders) db.returnOrders = [];
   if (!db.shelfActivity) db.shelfActivity = [];
   if (!db.bigItemWarnings) db.bigItemWarnings = [];
+  if (!db.config) db.config = {};
   if (!db.nextIds) db.nextIds = {};
   if (typeof db.nextIds.shelves !== 'number') db.nextIds.shelves = 1;
   if (typeof db.nextIds.packages !== 'number') db.nextIds.packages = 1;
@@ -43,6 +45,8 @@ function loadDb() {
   if (typeof db.nextIds.returnOrders !== 'number') db.nextIds.returnOrders = 1;
   if (typeof db.nextIds.shelfActivity !== 'number') db.nextIds.shelfActivity = 1;
   if (typeof db.nextIds.bigItemWarnings !== 'number') db.nextIds.bigItemWarnings = 1;
+  
+  initDefaultConfig();
 }
 
 function saveDb() {
@@ -52,6 +56,136 @@ function saveDb() {
   fs.writeFileSync(dbFile, JSON.stringify(db, null, 2));
 }
 
+const DEFAULT_CONFIG = {
+  heatmap: {
+    hotThreshold: 0.75,
+    warmThreshold: 0.5,
+    mildThreshold: 0.25,
+    coolThreshold: 0
+  },
+  optimization: {
+    highFrequencyRatio: 0.6,
+    middleRows: [2, 3, 4]
+  },
+  bigItem: {
+    zones: ['C'],
+    warningThreshold: 0.8,
+    noticeThreshold: 0.6
+  }
+};
+
+function initDefaultConfig() {
+  let needsSave = false;
+  if (!db.config.heatmap) {
+    db.config.heatmap = { ...DEFAULT_CONFIG.heatmap };
+    needsSave = true;
+  } else {
+    if (typeof db.config.heatmap.hotThreshold !== 'number') {
+      db.config.heatmap.hotThreshold = DEFAULT_CONFIG.heatmap.hotThreshold;
+      needsSave = true;
+    }
+    if (typeof db.config.heatmap.warmThreshold !== 'number') {
+      db.config.heatmap.warmThreshold = DEFAULT_CONFIG.heatmap.warmThreshold;
+      needsSave = true;
+    }
+    if (typeof db.config.heatmap.mildThreshold !== 'number') {
+      db.config.heatmap.mildThreshold = DEFAULT_CONFIG.heatmap.mildThreshold;
+      needsSave = true;
+    }
+    if (typeof db.config.heatmap.coolThreshold !== 'number') {
+      db.config.heatmap.coolThreshold = DEFAULT_CONFIG.heatmap.coolThreshold;
+      needsSave = true;
+    }
+  }
+  if (!db.config.optimization) {
+    db.config.optimization = { ...DEFAULT_CONFIG.optimization, middleRows: [...DEFAULT_CONFIG.optimization.middleRows] };
+    needsSave = true;
+  } else {
+    if (typeof db.config.optimization.highFrequencyRatio !== 'number') {
+      db.config.optimization.highFrequencyRatio = DEFAULT_CONFIG.optimization.highFrequencyRatio;
+      needsSave = true;
+    }
+    if (!Array.isArray(db.config.optimization.middleRows)) {
+      db.config.optimization.middleRows = [...DEFAULT_CONFIG.optimization.middleRows];
+      needsSave = true;
+    }
+  }
+  if (!db.config.bigItem) {
+    db.config.bigItem = { ...DEFAULT_CONFIG.bigItem, zones: [...DEFAULT_CONFIG.bigItem.zones] };
+    needsSave = true;
+  } else {
+    if (!Array.isArray(db.config.bigItem.zones)) {
+      db.config.bigItem.zones = [...DEFAULT_CONFIG.bigItem.zones];
+      needsSave = true;
+    }
+    if (typeof db.config.bigItem.warningThreshold !== 'number') {
+      db.config.bigItem.warningThreshold = DEFAULT_CONFIG.bigItem.warningThreshold;
+      needsSave = true;
+    }
+    if (typeof db.config.bigItem.noticeThreshold !== 'number') {
+      db.config.bigItem.noticeThreshold = DEFAULT_CONFIG.bigItem.noticeThreshold;
+      needsSave = true;
+    }
+  }
+  if (needsSave) saveDb();
+}
+
+function getConfig() {
+  return JSON.parse(JSON.stringify(db.config));
+}
+
+function updateConfig(newConfig) {
+  if (newConfig.heatmap) {
+    if (typeof newConfig.heatmap.hotThreshold === 'number') {
+      db.config.heatmap.hotThreshold = Math.min(Math.max(newConfig.heatmap.hotThreshold, 0), 1);
+    }
+    if (typeof newConfig.heatmap.warmThreshold === 'number') {
+      db.config.heatmap.warmThreshold = Math.min(Math.max(newConfig.heatmap.warmThreshold, 0), 1);
+    }
+    if (typeof newConfig.heatmap.mildThreshold === 'number') {
+      db.config.heatmap.mildThreshold = Math.min(Math.max(newConfig.heatmap.mildThreshold, 0), 1);
+    }
+    if (typeof newConfig.heatmap.coolThreshold === 'number') {
+      db.config.heatmap.coolThreshold = Math.min(Math.max(newConfig.heatmap.coolThreshold, 0), 1);
+    }
+  }
+  if (newConfig.optimization) {
+    if (typeof newConfig.optimization.highFrequencyRatio === 'number') {
+      db.config.optimization.highFrequencyRatio = Math.min(Math.max(newConfig.optimization.highFrequencyRatio, 0), 1);
+    }
+    if (Array.isArray(newConfig.optimization.middleRows)) {
+      db.config.optimization.middleRows = newConfig.optimization.middleRows
+        .map(r => parseInt(r))
+        .filter(r => !isNaN(r) && r > 0);
+    }
+  }
+  if (newConfig.bigItem) {
+    if (Array.isArray(newConfig.bigItem.zones)) {
+      db.config.bigItem.zones = newConfig.bigItem.zones.map(z => String(z).toUpperCase());
+      for (const shelf of db.shelves) {
+        shelf.is_big_item_zone = db.config.bigItem.zones.includes(shelf.zone) ? 1 : 0;
+      }
+    }
+    if (typeof newConfig.bigItem.warningThreshold === 'number') {
+      db.config.bigItem.warningThreshold = Math.min(Math.max(newConfig.bigItem.warningThreshold, 0), 1);
+    }
+    if (typeof newConfig.bigItem.noticeThreshold === 'number') {
+      db.config.bigItem.noticeThreshold = Math.min(Math.max(newConfig.bigItem.noticeThreshold, 0), 1);
+    }
+  }
+  saveDb();
+  return getConfig();
+}
+
+function resetConfig() {
+  db.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  for (const shelf of db.shelves) {
+    shelf.is_big_item_zone = db.config.bigItem.zones.includes(shelf.zone) ? 1 : 0;
+  }
+  saveDb();
+  return getConfig();
+}
+
 function initDatabase() {
   loadDb();
 
@@ -59,7 +193,7 @@ function initDatabase() {
     const zones = ['A', 'B', 'C'];
     const rows = 5;
     const cols = 4;
-    const bigItemZones = ['C'];
+    const bigItemZones = db.config.bigItem.zones || ['C'];
 
     for (const zone of zones) {
       for (let r = 1; r <= rows; r++) {
@@ -89,7 +223,8 @@ function initDatabase() {
     let needsSave = false;
     for (const shelf of db.shelves) {
       if (typeof shelf.is_big_item_zone === 'undefined') {
-        shelf.is_big_item_zone = shelf.zone === 'C' ? 1 : 0;
+        const bigItemZones = db.config.bigItem.zones || ['C'];
+        shelf.is_big_item_zone = bigItemZones.includes(shelf.zone) ? 1 : 0;
         needsSave = true;
       }
       if (typeof shelf.in_count === 'undefined') {
@@ -535,16 +670,17 @@ function getHeatmapData() {
   const shelves = getAllShelves();
   const allActivities = shelves.map(s => s.total_activity || 0);
   const maxActivity = Math.max(...allActivities, 1);
+  const heatConfig = db.config.heatmap;
 
   return shelves.map(shelf => {
     const activity = shelf.total_activity || 0;
     const intensity = activity / maxActivity;
     
     let heatLevel;
-    if (intensity >= 0.75) heatLevel = 'hot';
-    else if (intensity >= 0.5) heatLevel = 'warm';
-    else if (intensity >= 0.25) heatLevel = 'mild';
-    else if (intensity > 0) heatLevel = 'cool';
+    if (intensity >= heatConfig.hotThreshold) heatLevel = 'hot';
+    else if (intensity >= heatConfig.warmThreshold) heatLevel = 'warm';
+    else if (intensity >= heatConfig.mildThreshold) heatLevel = 'mild';
+    else if (intensity > heatConfig.coolThreshold) heatLevel = 'cool';
     else heatLevel = 'cold';
 
     return {
@@ -572,19 +708,18 @@ function getHeatmapStats() {
   return stats;
 }
 
-const MIDDLE_ROWS = [2, 3, 4];
-const HIGH_FREQUENCY_THRESHOLD = 0.6;
-
 function optimizeShelfPlacement() {
   const heatmapData = getHeatmapData();
   const maxActivity = Math.max(...heatmapData.map(s => s.activity), 1);
-  const threshold = maxActivity * HIGH_FREQUENCY_THRESHOLD;
+  const optConfig = db.config.optimization;
+  const threshold = maxActivity * optConfig.highFrequencyRatio;
+  const middleRows = optConfig.middleRows;
 
   const highFreqShelves = heatmapData.filter(s => s.activity >= threshold && s.activity > 0);
   const lowFreqShelves = heatmapData.filter(s => s.activity < threshold);
 
-  const inMiddleRow = (s) => MIDDLE_ROWS.includes(s.row_num);
-  const notInMiddleRow = (s) => !MIDDLE_ROWS.includes(s.row_num);
+  const inMiddleRow = (s) => middleRows.includes(s.row_num);
+  const notInMiddleRow = (s) => !middleRows.includes(s.row_num);
 
   const highFreqNotMiddle = highFreqShelves.filter(notInMiddleRow);
   const lowFreqInMiddle = lowFreqShelves.filter(inMiddleRow);
@@ -638,7 +773,7 @@ function optimizeShelfPlacement() {
     high_frequency_count: highFreqShelves.length,
     low_frequency_count: lowFreqShelves.length,
     adjustments,
-    middle_rows: MIDDLE_ROWS
+    middle_rows: middleRows
   };
 }
 
@@ -648,16 +783,15 @@ function getBigItemZoneStatus() {
   const occupiedBigItem = bigItemShelves.filter(s => s.is_occupied === 1).length;
   const availableBigItem = totalBigItem - occupiedBigItem;
   const usageRate = totalBigItem > 0 ? (occupiedBigItem / totalBigItem) : 0;
-
-  const WARNING_THRESHOLD = 0.8;
+  const bigItemConfig = db.config.bigItem;
 
   let warningLevel = 'normal';
   let warningMessage = '';
 
-  if (usageRate >= WARNING_THRESHOLD) {
+  if (usageRate >= bigItemConfig.warningThreshold) {
     warningLevel = 'critical';
     warningMessage = `大件区使用率已达 ${Math.round(usageRate * 100)}%，即将满载，请及时预留空间或清理大件！`;
-  } else if (usageRate >= 0.6) {
+  } else if (usageRate >= bigItemConfig.noticeThreshold) {
     warningLevel = 'warning';
     warningMessage = `大件区使用率已达 ${Math.round(usageRate * 100)}%，请留意大件库存。`;
   }
@@ -674,7 +808,8 @@ function getBigItemZoneStatus() {
     usage_rate: usageRate,
     warning_level: warningLevel,
     warning_message: warningMessage,
-    warning_threshold: WARNING_THRESHOLD,
+    warning_threshold: bigItemConfig.warningThreshold,
+    notice_threshold: bigItemConfig.noticeThreshold,
     recent_big_items: recentBigItems,
     big_item_zones: [...new Set(bigItemShelves.map(s => s.zone))]
   };
@@ -703,6 +838,7 @@ function getBigItemWarnings() {
 function findOptimalEmptyShelf(isBigItem = false) {
   const heatmapData = getHeatmapData();
   const maxActivity = Math.max(...heatmapData.map(s => s.activity), 1);
+  const middleRows = db.config.optimization.middleRows;
 
   let candidates = db.shelves.filter(s => s.is_occupied === 0);
 
@@ -723,7 +859,7 @@ function findOptimalEmptyShelf(isBigItem = false) {
   return candidates
     .map(s => {
       const activity = s.total_activity || 0;
-      const inMiddle = MIDDLE_ROWS.includes(s.row_num) ? 1 : 0;
+      const inMiddle = middleRows.includes(s.row_num) ? 1 : 0;
       const score = inMiddle * 1000 + (maxActivity - activity);
       return { shelf: s, score };
     })
@@ -765,4 +901,7 @@ module.exports = {
   createBigItemWarning,
   getBigItemWarnings,
   findOptimalEmptyShelf,
+  getConfig,
+  updateConfig,
+  resetConfig,
 };

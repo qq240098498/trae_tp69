@@ -38,6 +38,9 @@ const {
   createBigItemWarning,
   getBigItemWarnings,
   findOptimalEmptyShelf,
+  getConfig,
+  updateConfig,
+  resetConfig,
 } = require('./db');
 
 const dataDir = path.join(__dirname, 'data');
@@ -616,6 +619,44 @@ app.post('/api/shelves/big-item-warnings', (req, res) => {
       success: true,
       data: warning,
       message: '预警已创建'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/config', (req, res) => {
+  try {
+    const config = getConfig();
+    res.json({
+      success: true,
+      data: config
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/config', (req, res) => {
+  try {
+    const config = updateConfig(req.body);
+    res.json({
+      success: true,
+      data: config,
+      message: '配置更新成功'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/config/reset', (req, res) => {
+  try {
+    const config = resetConfig();
+    res.json({
+      success: true,
+      data: config,
+      message: '配置已重置为默认值'
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -1263,5 +1263,28 @@
       "activity_time": "2026-06-21T06:36:33.899Z"
     }
   ],
-  "bigItemWarnings": []
+  "bigItemWarnings": [],
+  "config": {
+    "heatmap": {
+      "hotThreshold": 0.75,
+      "warmThreshold": 0.5,
+      "mildThreshold": 0.25,
+      "coolThreshold": 0
+    },
+    "optimization": {
+      "highFrequencyRatio": 0.6,
+      "middleRows": [
+        2,
+        3,
+        4
+      ]
+    },
+    "bigItem": {
+      "zones": [
+        "C"
+      ],
+      "warningThreshold": 0.8,
+      "noticeThreshold": 0.6
+    }
+  }
 }

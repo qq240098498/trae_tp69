@@ -56,6 +56,7 @@
         <div class="tab" data-tab="distribution">🗺️ 分布图</div>
         <div class="tab" data-tab="optimize">⚡ 优化建议</div>
         <div class="tab" data-tab="bigitem">📦 大件区</div>
+        <div class="tab" data-tab="settings">⚙️ 设置</div>
       </div>
 
       <div class="tabs-content active" id="tab-heatmap">
@@ -188,6 +189,83 @@
           </table>
         </div>
       </div>
+
+      <div class="tabs-content" id="tab-settings">
+        <div style="margin-bottom: 20px; padding: 12px; background: #eaf2f8; border-radius: 6px; color: #1a5276; font-size: 13px;">
+          💡 <strong>提示：</strong>调整以下参数可自定义热力图分级规则、货架优化策略和大件区配置，修改后立即生效。
+        </div>
+
+        <div class="two-col">
+          <div class="card" style="box-shadow: none; padding: 0; margin-bottom: 0;">
+            <h3 style="font-size: 16px; margin-bottom: 15px; color: #1e2a38;">🔥 热力图分级阈值</h3>
+            <div class="form-group">
+              <label for="hotThreshold">🔥 高频热区阈值 (0-1)</label>
+              <input type="number" id="hotThreshold" step="0.05" min="0" max="1" placeholder="例如: 0.75">
+              <p style="font-size: 12px; color: #999; margin-top: 4px;">高于此值的货架位为"高频热区"</p>
+            </div>
+            <div class="form-group">
+              <label for="warmThreshold">🌡️ 较热区阈值 (0-1)</label>
+              <input type="number" id="warmThreshold" step="0.05" min="0" max="1" placeholder="例如: 0.5">
+              <p style="font-size: 12px; color: #999; margin-top: 4px;">高于此值且低于热区的为"较热区"</p>
+            </div>
+            <div class="form-group">
+              <label for="mildThreshold">☀️ 中等区阈值 (0-1)</label>
+              <input type="number" id="mildThreshold" step="0.05" min="0" max="1" placeholder="例如: 0.25">
+              <p style="font-size: 12px; color: #999; margin-top: 4px;">高于此值且低于较热区的为"中等区"</p>
+            </div>
+            <div class="form-group">
+              <label for="coolThreshold">🌿 低频区阈值 (0-1)</label>
+              <input type="number" id="coolThreshold" step="0.05" min="0" max="1" placeholder="例如: 0">
+              <p style="font-size: 12px; color: #999; margin-top: 4px;">高于此值且低于中等区的为"低频区"</p>
+            </div>
+          </div>
+
+          <div class="card" style="box-shadow: none; padding: 0; margin-bottom: 0;">
+            <h3 style="font-size: 16px; margin-bottom: 15px; color: #1e2a38;">⚡ 货架优化设置</h3>
+            <div class="form-group">
+              <label for="highFrequencyRatio">高频阈值比例 (0-1)</label>
+              <input type="number" id="highFrequencyRatio" step="0.05" min="0" max="1" placeholder="例如: 0.6">
+              <p style="font-size: 12px; color: #999; margin-top: 4px;">达到最大频次此比例的货架位视为高频</p>
+            </div>
+            <div class="form-group">
+              <label for="middleRows">中下层行号（用逗号分隔）</label>
+              <input type="text" id="middleRows" placeholder="例如: 2,3,4">
+              <p style="font-size: 12px; color: #999; margin-top: 4px;">建议高频货架位所在的排数，减少弯腰登高</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="box-shadow: none; padding: 0; margin-top: 20px;">
+          <h3 style="font-size: 16px; margin-bottom: 15px; color: #1e2a38;">📦 大件区配置</h3>
+          <div class="two-col">
+            <div>
+              <div class="form-group">
+                <label for="bigItemZones">大件区区域（用逗号分隔）</label>
+                <input type="text" id="bigItemZones" placeholder="例如: C">
+                <p style="font-size: 12px; color: #999; margin-top: 4px;">设置哪些区域作为大件专用区</p>
+              </div>
+            </div>
+            <div>
+              <div class="form-group">
+                <label for="warningThreshold">🚨 紧急预警阈值 (0-1)</label>
+                <input type="number" id="warningThreshold" step="0.05" min="0" max="1" placeholder="例如: 0.8">
+                <p style="font-size: 12px; color: #999; margin-top: 4px;">使用率达到此值时触发红色紧急预警</p>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="noticeThreshold">⚠️ 提醒预警阈值 (0-1)</label>
+            <input type="number" id="noticeThreshold" step="0.05" min="0" max="1" placeholder="例如: 0.6">
+            <p style="font-size: 12px; color: #999; margin-top: 4px;">使用率达到此值时触发黄色提醒预警</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+          <button class="btn btn-primary" onclick="saveConfig()">💾 保存设置</button>
+          <button class="btn btn-secondary" onclick="loadConfig()">🔄 重置表单</button>
+          <button class="btn btn-warning" onclick="resetToDefault()" style="margin-left: auto;">↩️ 恢复默认</button>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -219,8 +297,9 @@
         fetch('/api/shelves').then(r => r.json()),
         fetch('/api/shelves/heatmap').then(r => r.json()),
         fetch('/api/shelves/optimize').then(r => r.json()),
-        fetch('/api/shelves/big-item-status').then(r => r.json())
-      ]).then(([shelvesData, heatmapData, optimizeData, bigItemData]) => {
+        fetch('/api/shelves/big-item-status').then(r => r.json()),
+        fetch('/api/config').then(r => r.json())
+      ]).then(([shelvesData, heatmapData, optimizeData, bigItemData, configData]) => {
         if (shelvesData.success) {
           const { shelves, stats } = shelvesData.data;
           document.getElementById('totalShelves').textContent = stats.total;
@@ -252,6 +331,10 @@
         if (bigItemData.success) {
           renderBigItemContent(bigItemData.data);
           renderWarningBanner(bigItemData.data);
+        }
+
+        if (configData.success) {
+          populateConfigForm(configData.data);
         }
       }).catch(err => console.error(err));
     }
@@ -532,6 +615,94 @@
       if (!timeStr) return '-';
       const d = new Date(timeStr);
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    function populateConfigForm(config) {
+      if (config.heatmap) {
+        document.getElementById('hotThreshold').value = config.heatmap.hotThreshold;
+        document.getElementById('warmThreshold').value = config.heatmap.warmThreshold;
+        document.getElementById('mildThreshold').value = config.heatmap.mildThreshold;
+        document.getElementById('coolThreshold').value = config.heatmap.coolThreshold;
+      }
+      if (config.optimization) {
+        document.getElementById('highFrequencyRatio').value = config.optimization.highFrequencyRatio;
+        document.getElementById('middleRows').value = config.optimization.middleRows.join(',');
+      }
+      if (config.bigItem) {
+        document.getElementById('bigItemZones').value = config.bigItem.zones.join(',');
+        document.getElementById('warningThreshold').value = config.bigItem.warningThreshold;
+        document.getElementById('noticeThreshold').value = config.bigItem.noticeThreshold;
+      }
+    }
+
+    function getConfigFromForm() {
+      return {
+        heatmap: {
+          hotThreshold: parseFloat(document.getElementById('hotThreshold').value),
+          warmThreshold: parseFloat(document.getElementById('warmThreshold').value),
+          mildThreshold: parseFloat(document.getElementById('mildThreshold').value),
+          coolThreshold: parseFloat(document.getElementById('coolThreshold').value)
+        },
+        optimization: {
+          highFrequencyRatio: parseFloat(document.getElementById('highFrequencyRatio').value),
+          middleRows: document.getElementById('middleRows').value
+            .split(',')
+            .map(s => s.trim())
+            .filter(s => s)
+            .map(s => parseInt(s))
+            .filter(n => !isNaN(n))
+        },
+        bigItem: {
+          zones: document.getElementById('bigItemZones').value
+            .split(',')
+            .map(s => s.trim().toUpperCase())
+            .filter(s => s),
+          warningThreshold: parseFloat(document.getElementById('warningThreshold').value),
+          noticeThreshold: parseFloat(document.getElementById('noticeThreshold').value)
+        }
+      };
+    }
+
+    function saveConfig() {
+      const config = getConfigFromForm();
+      fetch('/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      }).then(r => r.json()).then(data => {
+        if (data.success) {
+          alert('✅ 设置保存成功！');
+          loadAllData();
+        } else {
+          alert('❌ 保存失败：' + (data.error || '未知错误'));
+        }
+      }).catch(err => {
+        alert('❌ 保存失败：' + err.message);
+      });
+    }
+
+    function loadConfig() {
+      fetch('/api/config').then(r => r.json()).then(data => {
+        if (data.success) {
+          populateConfigForm(data.data);
+        }
+      });
+    }
+
+    function resetToDefault() {
+      if (!confirm('确定要恢复所有设置为默认值吗？')) return;
+      fetch('/api/config/reset', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            alert('✅ 已恢复默认设置！');
+            loadAllData();
+          } else {
+            alert('❌ 恢复失败：' + (data.error || '未知错误'));
+          }
+        }).catch(err => {
+          alert('❌ 恢复失败：' + err.message);
+        });
     }
 
     document.querySelectorAll('.tab').forEach(tab => {
